@@ -1,4 +1,4 @@
-export type ModuleType = 'container' | 'text' | 'image' | 'divider' | 'button' | 'header' | 'footer' | 'toc'
+export type ModuleType = 'container' | 'text' | 'image' | 'divider' | 'button' | 'header' | 'footer' | 'toc' | 'heading'
 
 export interface ModuleStyles {
   margin?: string
@@ -11,6 +11,7 @@ export interface ModuleStyles {
   color?: string
   fontWeight?: string
   lineHeight?: string
+  fontFamily?: string
 }
 
 export interface ContainerModuleProps {
@@ -19,6 +20,7 @@ export interface ContainerModuleProps {
 
 export interface TextModuleProps {
   content: string
+  icon?: string
 }
 
 export interface ImageModuleProps {
@@ -26,6 +28,13 @@ export interface ImageModuleProps {
   alt: string
   width?: string
   height?: string
+  caption?: string
+  captionStyle?: {
+    fontSize?: string
+    color?: string
+    italic?: boolean
+    textAlign?: 'left' | 'center' | 'right'
+  }
 }
 
 export interface DividerModuleProps {
@@ -73,6 +82,15 @@ export interface TocModuleProps {
   variant: TocVariant
 }
 
+export type HeadingVariant = 'numbered' | 'left-bar' | 'center' | 'simple'
+
+export interface HeadingModuleProps {
+  text: string
+  level: number
+  variant: HeadingVariant
+  showNumbering: boolean
+}
+
 export type ModuleSpecificProps =
   | ContainerModuleProps
   | TextModuleProps
@@ -82,6 +100,7 @@ export type ModuleSpecificProps =
   | HeaderModuleProps
   | FooterModuleProps
   | TocModuleProps
+  | HeadingModuleProps
 
 export interface Module {
   id: string
@@ -138,6 +157,7 @@ export function createModule(type: 'container'): Module & { props: ContainerModu
 export function createModule(type: 'header'): Module & { props: HeaderModuleProps }
 export function createModule(type: 'footer'): Module & { props: FooterModuleProps }
 export function createModule(type: 'toc'): Module & { props: TocModuleProps }
+export function createModule(type: 'heading'): Module & { props: HeadingModuleProps }
 export function createModule(type: ModuleType): Module {
   const id = generateId()
 
@@ -146,14 +166,14 @@ export function createModule(type: ModuleType): Module {
       return {
         id,
         type: 'text',
-        props: { content: '点击编辑文字' } as TextModuleProps,
+        props: { content: '点击编辑文字', icon: '' } as TextModuleProps,
         styles: getDefaultStyles()
       }
     case 'image':
       return {
         id,
         type: 'image',
-        props: { src: '', alt: '图片' } as ImageModuleProps,
+        props: { src: '', alt: '图片', caption: '', captionStyle: { fontSize: '13px', color: '#9ca3af', italic: false, textAlign: 'center' } } as ImageModuleProps,
         styles: getDefaultStyles()
       }
     case 'divider':
@@ -240,6 +260,26 @@ export function createModule(type: ModuleType): Module {
           backgroundColor: '#f8fafc',
           borderRadius: '8px',
           border: '1px solid #e5e7eb'
+        }
+      }
+    case 'heading':
+      return {
+        id,
+        type: 'heading',
+        props: {
+          text: '章节标题',
+          level: 1,
+          variant: 'numbered',
+          showNumbering: true
+        } as HeadingModuleProps,
+        styles: {
+          ...getDefaultStyles(),
+          fontSize: '22px',
+          fontWeight: 'bold',
+          color: '#111827',
+          padding: '12px 0',
+          margin: '24px 0 16px 0',
+          lineHeight: '1.4'
         }
       }
     default:

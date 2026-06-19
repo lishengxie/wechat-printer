@@ -265,8 +265,12 @@ function generateHTMLFromDocument(document: Document): string {
   function renderModule(module: any): string {
     const baseStyle = 'margin: 0 0 16px 0;' + getInlineStyle(module.styles)
     switch (module.type) {
-      case 'text':
-        return `<section style="${baseStyle}"><p style="margin: 0;">${module.props.content}</p></section>`
+      case 'text': {
+        const iconHtml = module.props.icon
+          ? `<p style="margin: 0 0 4px 0; font-size: 20px; line-height: 1;">${module.props.icon}</p>`
+          : ''
+        return `<section style="${baseStyle}">${iconHtml}<p style="margin: 0;">${module.props.content}</p></section>`
+      }
       case 'image': {
         const img = `<section style="${baseStyle}text-align: center;"><img src="${module.props.src}" alt="${module.props.alt || ''}" style="max-width: 100%; height: auto;" /></section>`
         const caption = module.props.caption

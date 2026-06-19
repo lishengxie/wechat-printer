@@ -481,6 +481,35 @@ export const useDocumentStore = defineStore('document', () => {
     document.value = newDocument
   }
 
+  // 原子化替换整个模块（支持 styles、props、type、children 的全量替换）
+  function replaceModule(updatedModule: Module) {
+    saveToHistory()
+
+    const newDocument = JSON.parse(JSON.stringify(document.value))
+    const module = findModuleById(newDocument.root, updatedModule.id)
+    if (module) {
+      // 允许替换 type
+      if (updatedModule.type) {
+        module.type = updatedModule.type
+      }
+      // 替换 styles
+      if (updatedModule.styles) {
+        module.styles = { ...module.styles, ...updatedModule.styles }
+      }
+      // 替换 props
+      if (updatedModule.props) {
+        module.props = { ...module.props, ...updatedModule.props } as ModuleSpecificProps
+      }
+      // 替换 children（container 类型）
+      if (updatedModule.children) {
+        module.children = updatedModule.children
+      }
+    }
+
+    newDocument.updatedAt = new Date().toISOString()
+    document.value = newDocument
+  }
+
   function undo() {
     if (historyIndex.value > 0) {
       historyIndex.value--
@@ -517,6 +546,7 @@ export const useDocumentStore = defineStore('document', () => {
     moveModule,
     updateModuleStyles,
     updateModuleProps,
+    replaceModule,
     undo,
     redo,
     canUndo,

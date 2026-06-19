@@ -2,7 +2,7 @@
 import { useDragState } from '@/composables/useDragState'
 import { useDocumentStore } from '@/stores/document'
 import { createModule } from '@/types/document'
-import type { HeaderVariant, FooterVariant, TocVariant } from '@/types/document'
+import type { HeaderVariant, FooterVariant, TocVariant, HeadingVariant } from '@/types/document'
 import { computed } from 'vue'
 
 interface ModuleItem {
@@ -80,6 +80,39 @@ const modules: ModuleItem[] = [
     icon: '📋',
     variant: 'minimal',
     group: '目录'
+  },
+  // 章节标题
+  {
+    type: 'heading',
+    name: '标题 · 编号风',
+    description: '左侧彩色竖条 + 编号前缀，章节感强',
+    icon: '📌',
+    variant: 'numbered',
+    group: '章节标题'
+  },
+  {
+    type: 'heading',
+    name: '标题 · 左侧竖条',
+    description: '彩色竖条装饰，无编号，简洁有力',
+    icon: '📍',
+    variant: 'left-bar',
+    group: '章节标题'
+  },
+  {
+    type: 'heading',
+    name: '标题 · 居中装饰',
+    description: '居中大标题配上下装饰线',
+    icon: '🎯',
+    variant: 'center',
+    group: '章节标题'
+  },
+  {
+    type: 'heading',
+    name: '标题 · 极简',
+    description: '仅加大加粗文字，干净利落',
+    icon: '🔤',
+    variant: 'simple',
+    group: '章节标题'
   },
   // 基础模块
   {
@@ -168,7 +201,7 @@ const groupedModules = computed(() => {
     groups[g].push(m)
   }
   // 定义组的显示顺序
-  const order = ['页首', '目录', '基础组件', '页尾']
+  const order = ['页首', '目录', '章节标题', '基础组件', '页尾']
   const ordered: [string, ModuleItem[]][] = []
   for (const name of order) {
     if (groups[name]) {
@@ -212,6 +245,8 @@ function handleClickAdd(module: ModuleItem) {
       (newModule.props as any).variant = module.variant as FooterVariant
     } else if (module.type === 'toc') {
       (newModule.props as any).variant = module.variant as TocVariant
+    } else if (module.type === 'heading') {
+      (newModule.props as any).variant = module.variant as HeadingVariant
     }
   }
   documentStore.addModule(newModule)

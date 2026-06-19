@@ -1,15 +1,26 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Module, FooterModuleProps } from '@/types/document'
 
 interface Props {
   module: Module & { props: FooterModuleProps }
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+const containerStyle = computed(() => ({
+  padding: props.module.styles.padding || '16px',
+  backgroundColor: props.module.styles.backgroundColor || 'transparent',
+  borderRadius: props.module.styles.borderRadius || '0',
+  border: props.module.styles.border || 'none',
+  margin: props.module.styles.margin || '0 0 16px 0',
+  textAlign: (props.module.styles.textAlign || 'center') as any,
+  fontFamily: props.module.styles.fontFamily || undefined
+}))
 </script>
 
 <template>
-  <div class="footer-module" :class="`variant-${module.props.variant}`">
+  <div class="footer-module" :class="`variant-${module.props.variant}`" :style="containerStyle">
     <!-- 默认风格 -->
     <template v-if="module.props.variant === 'default'">
       <hr

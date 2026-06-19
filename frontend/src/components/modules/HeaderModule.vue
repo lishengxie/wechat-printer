@@ -1,15 +1,26 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Module, HeaderModuleProps } from '@/types/document'
 
 interface Props {
   module: Module & { props: HeaderModuleProps }
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+const containerStyle = computed(() => ({
+  padding: props.module.styles.padding || '24px 16px',
+  backgroundColor: props.module.styles.backgroundColor || '#f8fafc',
+  borderRadius: props.module.styles.borderRadius || '8px',
+  border: props.module.styles.border || 'none',
+  margin: props.module.styles.margin || '0 0 16px 0',
+  textAlign: (props.module.styles.textAlign || 'center') as any,
+  fontFamily: props.module.styles.fontFamily || undefined
+}))
 </script>
 
 <template>
-  <div class="header-module" :class="`variant-${module.props.variant}`">
+  <div class="header-module" :class="`variant-${module.props.variant}`" :style="containerStyle">
     <!-- 默认风格 -->
     <template v-if="module.props.variant === 'default'">
       <h1
@@ -20,7 +31,7 @@ defineProps<Props>()
           fontWeight: module.styles.fontWeight || 'bold',
           textAlign: module.styles.textAlign || 'center',
           margin: '0 0 8px 0',
-          lineHeight: '1.4'
+          lineHeight: module.styles.lineHeight || '1.4'
         }"
       >
         {{ module.props.title }}
@@ -63,7 +74,7 @@ defineProps<Props>()
         class="magazine-subtitle"
         :style="{
           textAlign: module.styles.textAlign || 'center',
-          color: '#dc2626'
+          color: module.styles.color || '#dc2626'
         }"
       >
         {{ module.props.subtitle }}
@@ -104,7 +115,10 @@ defineProps<Props>()
         class="minimal-title"
         :style="{
           color: module.styles.color || '#111827',
-          textAlign: module.styles.textAlign || 'left'
+          textAlign: module.styles.textAlign || 'left',
+          fontSize: module.styles.fontSize || '26px',
+          fontWeight: module.styles.fontWeight || '700',
+          lineHeight: module.styles.lineHeight || '1.35'
         }"
       >
         {{ module.props.title }}
@@ -126,7 +140,9 @@ defineProps<Props>()
         class="card-inner"
         :style="{
           backgroundColor: module.styles.backgroundColor || '#1f2937',
-          textAlign: module.styles.textAlign || 'center'
+          textAlign: module.styles.textAlign || 'center',
+          borderRadius: module.styles.borderRadius || '12px',
+          border: module.styles.border || 'none'
         }"
       >
         <h1
@@ -226,9 +242,6 @@ defineProps<Props>()
 
 /* 极简风 */
 .minimal-title {
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.35;
   margin: 0 0 12px 0;
   letter-spacing: -0.3px;
 }
@@ -242,7 +255,6 @@ defineProps<Props>()
 /* 卡片风 */
 .card-inner {
   padding: 32px 24px;
-  border-radius: 12px;
 }
 .card-title {
   font-size: 24px;

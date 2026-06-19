@@ -25,7 +25,25 @@
       "Bash(git init:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(go version:*)"
+      "Bash(go version:*)",
+      "Bash(git rm:*)",
+      "Bash(./api.exe 2>&1)",
+      "Bash(tasklist)",
+      "Bash(taskkill /F /IM api.exe)",
+      "Bash(curl -s http://localhost:8080/api/auth/login -X POST -H \"Content-Type: application/json\" -d '{\"\"username\"\":\"\"admin\"\",\"\"password\"\":\"\"admin123\"\"}')",
+      "Bash(cmd /c \"taskkill /F /PID 37236\")",
+      "Bash(powershell -Command \"Stop-Process -Id 37236 -Force\" 2>&1)",
+      "WebSearch",
+      "WebFetch(domain:blogs.kainy.cn)",
+      "Bash(tasklist //fi \"PID eq 27512\")",
+      "Bash(taskkill:*)",
+      "Bash(findstr \":3008\")",
+      "Bash(findstr LISTENING)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoidXNlcl9hZG1pbl9kZWZhdWx0Iiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzgyNDYyNzQzLCJpYXQiOjE3ODE4NTc5NDN9.2c7jq6g9GGGdiyACAx3Atd4HrV8s_oxNS43DT9d1fBQ\")",
+      "Bash(curl -s http://localhost:8080/api/ai/config -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(curl -s http://localhost:8080/api/ai/config -X PUT -H \"Content-Type: application/json\" -H \"Authorization: Bearer $TOKEN\" -d '{\"\"api_key\"\":\"\"test-key\"\",\"\"api_base\"\":\"\"https://test.api.com\"\",\"\"model\"\":\"\"test-model\"\"}')",
+      "Bash(curl -s http://localhost:8080/api/ai/config -X PUT -H \"Content-Type: application/json\" -H \"Authorization: Bearer $TOKEN\" -d '{\"\"api_key\"\":\"\"\"\",\"\"api_base\"\":\"\"\"\",\"\"model\"\":\"\"\"\"}')",
+      "Bash(curl -s http://localhost:3008)"
     ]
   }
 }

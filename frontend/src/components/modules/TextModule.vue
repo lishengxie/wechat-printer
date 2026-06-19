@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject, ref, computed } from 'vue'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, TextModuleProps } from '@/types/document'
 
@@ -11,6 +11,15 @@ const props = defineProps<Props>()
 
 const documentStore = useDocumentStore()
 const isPreviewMode = inject('isPreviewMode', ref(false))
+
+const containerStyle = computed(() => ({
+  padding: props.module.styles.padding || '0',
+  backgroundColor: props.module.styles.backgroundColor || 'transparent',
+  borderRadius: props.module.styles.borderRadius || '0',
+  border: props.module.styles.border || 'none',
+  margin: props.module.styles.margin || '0 0 16px 0',
+  fontFamily: props.module.styles.fontFamily || undefined
+}))
 
 // 处理编辑完成
 function handleBlur(event: FocusEvent) {
@@ -30,7 +39,10 @@ function handlePaste(event: ClipboardEvent) {
 </script>
 
 <template>
-  <div class="text-module">
+  <div class="text-module" :style="containerStyle">
+    <div v-if="module.props.icon" class="text-icon-row">
+      <span class="text-icon">{{ module.props.icon }}</span>
+    </div>
     <p
       class="leading-relaxed"
       :style="{
@@ -39,11 +51,7 @@ function handlePaste(event: ClipboardEvent) {
         fontWeight: module.styles.fontWeight || 'normal',
         lineHeight: module.styles.lineHeight || '1.6',
         textAlign: module.styles.textAlign || 'left',
-        margin: module.styles.margin || '0',
-        padding: module.styles.padding || '0',
-        backgroundColor: module.styles.backgroundColor || 'transparent',
-        borderRadius: module.styles.borderRadius || '0',
-        border: module.styles.border || 'none',
+        margin: '0',
         minHeight: '20px'
       }"
       :contenteditable="!isPreviewMode.value"
@@ -57,6 +65,15 @@ function handlePaste(event: ClipboardEvent) {
 <style scoped>
 .text-module {
   min-height: 24px;
+}
+
+.text-icon-row {
+  margin-bottom: 4px;
+}
+
+.text-icon {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .text-module p {

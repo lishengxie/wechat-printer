@@ -1,11 +1,24 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Module, ImageModuleProps } from '@/types/document'
 
 interface Props {
   module: Module & { props: ImageModuleProps }
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+const captionStyle = computed(() => {
+  const cs = props.module.props.captionStyle || {}
+  return {
+    fontSize: cs.fontSize || '13px',
+    color: cs.color || '#9ca3af',
+    fontStyle: cs.italic ? 'italic' : 'normal',
+    textAlign: cs.textAlign || 'center',
+    margin: '8px 0 0 0',
+    lineHeight: '1.6'
+  }
+})
 </script>
 
 <template>
@@ -27,6 +40,7 @@ defineProps<Props>()
       </svg>
       <p class="text-sm">点击上传图片</p>
     </div>
+    <p v-if="module.props.caption" class="image-caption" :style="captionStyle">{{ module.props.caption }}</p>
   </div>
 </template>
 
@@ -34,5 +48,8 @@ defineProps<Props>()
 .image-module {
   margin: 12px 0;
   text-align: center;
+}
+.image-caption {
+  word-break: break-word;
 }
 </style>

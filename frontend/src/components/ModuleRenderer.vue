@@ -9,6 +9,7 @@ import ContainerModule from './modules/ContainerModule.vue'
 import HeaderModule from './modules/HeaderModule.vue'
 import FooterModule from './modules/FooterModule.vue'
 import TocModule from './modules/TocModule.vue'
+import HeadingModule from './modules/HeadingModule.vue'
 
 interface Props {
   module: Module
@@ -25,7 +26,8 @@ const componentMap: Record<string, any> = {
   container: ContainerModule,
   header: HeaderModule,
   footer: FooterModule,
-  toc: TocModule
+  toc: TocModule,
+  heading: HeadingModule
 }
 
 const currentComponent = computed(() => componentMap[props.module.type])

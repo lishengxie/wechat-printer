@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, inject } from 'vue'
+import { ref, inject, computed } from 'vue'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, ContainerModuleProps, ModuleType } from '@/types/document'
 import { useDragState } from '@/composables/useDragState'
@@ -19,6 +19,14 @@ const isPreviewMode = inject('isPreviewMode', ref(false))
 const isDragOverContainer = ref(false)
 const activeDropIndex = ref<number | null>(null)
 const draggingModuleId = ref<string | null>(null)
+
+const containerStyle = computed(() => ({
+  padding: props.module.styles.padding || '24px 16px 16px',
+  backgroundColor: props.module.styles.backgroundColor || '#fafafa',
+  borderRadius: props.module.styles.borderRadius || '8px',
+  border: props.module.styles.border || '2px dashed #c0c4cc',
+  margin: props.module.styles.margin || '8px 0'
+}))
 
 // ============================================
 // 辅助函数
@@ -61,21 +69,14 @@ function handleDrop(event: DragEvent) {
   event.preventDefault()
   event.stopPropagation()
 
-  console.log('🟢 Container handleDrop called, activeDropIndex:', activeDropIndex.value)
-
   isDragOverContainer.value = false
   activeDropIndex.value = null
 
   const moduleType = getModuleTypeFromEvent(event)
-  console.log('  - moduleType:', moduleType)
-
   if (moduleType) {
     const children = props.module.children || []
     const newModule = createModule(moduleType)
-    console.log('  ✅ Adding module to container at index:', children.length)
     documentStore.addModule(newModule, props.module.id, children.length)
-  } else {
-    console.log('  ❌ No module type found!')
   }
 }
 
@@ -85,7 +86,6 @@ function handleDropLineDragOver(event: DragEvent, index: number) {
   event.preventDefault()
   event.stopPropagation()
   activeDropIndex.value = index
-  console.log('🟢 Container dropLine dragOver, index:', index)
 }
 
 // 放置到容器内指定位置
@@ -93,20 +93,14 @@ function handleDropAtIndex(event: DragEvent, index: number) {
   if (isPreviewMode.value) return
   event.preventDefault()
   event.stopPropagation()
-  console.log('🟢 Container dropAtIndex, index:', index)
 
   activeDropIndex.value = null
   isDragOverContainer.value = false
 
   const moduleType = getModuleTypeFromEvent(event)
-  console.log('  - moduleType:', moduleType)
-
   if (moduleType) {
     const newModule = createModule(moduleType)
-    console.log('  ✅ Inserting new module into container at index:', index)
     documentStore.addModule(newModule, props.module.id, index)
-  } else {
-    console.log('  ❌ No module type found!')
   }
 }
 
@@ -125,6 +119,7 @@ function handleModuleDragStart(moduleId: string) {
         getLayoutClass(module.props.layout),
         { 'drag-active': isDragOverContainer && !isPreviewMode }
       ]"
+      :style="containerStyle"
       @dragover.prevent.stop="handleDragOver"
       @dragleave.stop="handleDragLeave"
       @drop.prevent.stop="handleDrop"
@@ -179,11 +174,7 @@ function handleModuleDragStart(moduleId: string) {
 .container-inner {
   width: 100%;
   min-height: 50px;
-  padding: 24px 16px 16px 16px;
-  border: 2px dashed #c0c4cc;
-  border-radius: 8px;
   transition: all 0.2s ease;
-  background-color: #fafafa;
   position: relative;
   z-index: 10;
 }
@@ -212,8 +203,8 @@ function handleModuleDragStart(moduleId: string) {
 }
 
 .container-inner.drag-active {
-  border-color: #409eff;
-  background-color: rgba(64, 158, 255, 0.05);
+  border-color: #409eff !important;
+  background-color: rgba(64, 158, 255, 0.05) !important;
 }
 
 /* 子模块插槽 */
