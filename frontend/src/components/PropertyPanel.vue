@@ -4,6 +4,22 @@
       <h3 class="font-semibold text-gray-700">属性设置</h3>
     </div>
 
+    <div v-if="isArticleMode" class="p-4 space-y-4 border-b border-gray-100">
+      <h4 class="text-xs font-medium text-gray-500 uppercase">文章信息</h4>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">作者</label>
+        <input v-model="articleMeta.author" type="text" class="w-full px-3 py-2 border rounded text-sm" placeholder="作者名称" />
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">摘要</label>
+        <textarea v-model="articleMeta.summary" rows="2" class="w-full px-3 py-2 border rounded text-sm" placeholder="文章摘要"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">封面图片 URL</label>
+        <input v-model="articleMeta.cover_image" type="text" class="w-full px-3 py-2 border rounded text-sm" placeholder="https://..." />
+      </div>
+    </div>
+
     <div v-if="!selectedModule" class="p-6 text-center text-gray-400">
       <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
@@ -377,11 +393,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useDocumentStore } from '@/stores/document'
 import type { ModuleType, ModuleStyles, ModuleSpecificProps } from '@/types/document'
 
 const documentStore = useDocumentStore()
+
+const isArticleMode = inject('isArticleMode', false)
+const articleMeta = inject('articleMeta', { value: { title: '', author: '', summary: '', cover_image: '' } }) as any
 
 const selectedModule = computed(() => documentStore.selectedModule)
 
