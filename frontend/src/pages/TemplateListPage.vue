@@ -23,11 +23,11 @@ async function loadLayouts() {
 }
 
 function editLayout(id: string) {
-  router.push(`/editor/${id}`)
+  router.push(`/editor/template/${id}`)
 }
 
 async function deleteLayout(id: string) {
-  if (!confirm('确定要删除这个排版吗？')) return
+  if (!confirm('确定要删除这个模板吗？')) return
   try {
     await api.deleteLayout(id)
     await loadLayouts()
@@ -39,12 +39,25 @@ async function deleteLayout(id: string) {
 async function createLayout() {
   try {
     const layout = await api.createLayout({
-      name: '未命名排版',
+      name: '未命名模板',
       document: createEmptyDocument()
     })
-    router.push(`/editor/${layout.id}`)
+    router.push(`/editor/template/${layout.id}`)
   } catch (e: any) {
     alert('创建失败: ' + e.message)
+  }
+}
+
+async function createArticleFromTemplate(layoutId: string) {
+  try {
+    const layout = await api.getLayout(layoutId)
+    const article = await api.createArticle({
+      title: layout.name,
+      content: JSON.stringify(layout.document)
+    })
+    router.push(`/editor/article/${article.id}`)
+  } catch (e: any) {
+    alert('创建文章失败: ' + e.message)
   }
 }
 
@@ -54,13 +67,13 @@ onMounted(loadLayouts)
 <template>
   <div class="page">
     <div class="page-header">
-      <h2>我的排版</h2>
-      <button class="btn-primary" @click="createLayout">+ 新建排版</button>
+      <h2>排版模板</h2>
+      <button class="btn-primary" @click="createLayout">+ 新建模板</button>
     </div>
     <p v-if="loading" class="status">加载中...</p>
     <p v-else-if="error" class="status error">{{ error }}</p>
     <div v-else-if="layouts.length === 0" class="empty">
-      <p>还没有排版，点击右上角新建</p>
+      <p>还没有模板，点击右上角新建</p>
     </div>
     <div v-else class="card-grid">
       <div v-for="layout in layouts" :key="layout.id" class="card">
@@ -68,7 +81,8 @@ onMounted(loadLayouts)
         <p v-if="layout.description" class="card-desc">{{ layout.description }}</p>
         <p class="card-meta">{{ new Date(layout.updatedAt).toLocaleString() }}</p>
         <div class="card-actions">
-          <button class="btn-small" @click="editLayout(layout.id)">编辑</button>
+          <button class="btn-small primary" @click="createArticleFromTemplate(layout.id)">用此模板创建文章</button>
+          <button class="btn-small" @click="editLayout(layout.id)">编辑模板</button>
           <button class="btn-small danger" @click="deleteLayout(layout.id)">删除</button>
         </div>
       </div>
@@ -90,9 +104,11 @@ onMounted(loadLayouts)
 .card-title { font-size: 15px; font-weight: 600; color: #111827; margin: 0; }
 .card-desc { font-size: 13px; color: #6b7280; line-height: 1.4; }
 .card-meta { font-size: 12px; color: #9ca3af; }
-.card-actions { display: flex; gap: 8px; margin-top: 4px; }
+.card-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
 .btn-small { padding: 5px 12px; font-size: 12px; font-weight: 500; border-radius: 5px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; }
 .btn-small:hover { background: #f9fafb; }
+.btn-small.primary { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+.btn-small.primary:hover { background: #bfdbfe; }
 .btn-small.danger { color: #dc2626; border-color: #fecaca; }
 .btn-small.danger:hover { background: #fef2f2; }
 </style>
