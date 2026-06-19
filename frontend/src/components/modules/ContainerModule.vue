@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, inject, computed } from 'vue'
+import { ref, inject, computed, watch } from 'vue'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, ContainerModuleProps, ModuleType } from '@/types/document'
 import { useDragState } from '@/composables/useDragState'
 import { createModule } from '@/types/document'
 import ModuleItem from '../ModuleItem.vue'
+import { VueDraggable } from 'vue-draggable-plus'
 
 interface Props {
   module: Module & { props: ContainerModuleProps; children: Module[] }
@@ -17,8 +18,12 @@ const { getDraggingType } = useDragState()
 // 注入预览模式标志
 const isPreviewMode = inject('isPreviewMode', ref(false))
 const isDragOverContainer = ref(false)
-const activeDropIndex = ref<number | null>(null)
-const draggingModuleId = ref<string | null>(null)
+
+const childModules = ref<Module[]>([])
+
+watch(() => props.module.children, (children) => {
+  childModules.value = children || []
+}, { immediate: true })
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '24px 16px 16px',
@@ -41,10 +46,6 @@ function getLayoutClass(layout: string) {
   }
 }
 
-function getModuleTypeFromEvent(event: DragEvent): ModuleType | null {
-  return (event.dataTransfer?.getData('moduleType') as ModuleType) || getDraggingType()
-}
-
 // ============================================
 // 拖拽事件处理
 // ============================================
@@ -60,53 +61,30 @@ function handleDragLeave(event: DragEvent) {
   event.preventDefault()
   event.stopPropagation()
   isDragOverContainer.value = false
-  activeDropIndex.value = null
 }
 
-// 放置到容器（添加到末尾）
 function handleDrop(event: DragEvent) {
   if (isPreviewMode.value) return
   event.preventDefault()
   event.stopPropagation()
-
   isDragOverContainer.value = false
-  activeDropIndex.value = null
 
-  const moduleType = getModuleTypeFromEvent(event)
+  const existingModuleId = event.dataTransfer?.getData('moduleId')
+  if (existingModuleId) return // 排序由 VueDraggable 处理
+
+  const moduleType = event.dataTransfer?.getData('moduleType') as ModuleType
   if (moduleType) {
-    const children = props.module.children || []
     const newModule = createModule(moduleType)
-    documentStore.addModule(newModule, props.module.id, children.length)
+    documentStore.addModule(newModule, props.module.id, childModules.value.length)
   }
 }
 
-// 放置线拖拽经过
-function handleDropLineDragOver(event: DragEvent, index: number) {
-  if (isPreviewMode.value) return
-  event.preventDefault()
-  event.stopPropagation()
-  activeDropIndex.value = index
-}
-
-// 放置到容器内指定位置
-function handleDropAtIndex(event: DragEvent, index: number) {
-  if (isPreviewMode.value) return
-  event.preventDefault()
-  event.stopPropagation()
-
-  activeDropIndex.value = null
-  isDragOverContainer.value = false
-
-  const moduleType = getModuleTypeFromEvent(event)
-  if (moduleType) {
-    const newModule = createModule(moduleType)
-    documentStore.addModule(newModule, props.module.id, index)
+function onChildDragUpdate() {
+  const orderedIds = childModules.value.map(m => m.id)
+  const currentIds = (props.module.children || []).map(m => m.id)
+  if (JSON.stringify(orderedIds) !== JSON.stringify(currentIds)) {
+    documentStore.reorderChildModules(props.module.id, orderedIds)
   }
-}
-
-// 子模块开始拖拽
-function handleModuleDragStart(moduleId: string) {
-  draggingModuleId.value = moduleId
 }
 </script>
 
@@ -125,42 +103,33 @@ function handleModuleDragStart(moduleId: string) {
       @drop.prevent.stop="handleDrop"
     >
       <!-- 渲染子模块 -->
-      <template v-if="module.children && module.children.length > 0">
-        <template v-if="!isPreviewMode">
-          <div v-for="(child, index) in module.children" :key="child.id" class="child-slot">
-            <!-- 顶部放置线 -->
-            <div
-              class="child-drop-line"
-              :class="{ active: activeDropIndex === index }"
-              @dragover.prevent.stop="handleDropLineDragOver($event, index)"
-              @drop.prevent.stop="handleDropAtIndex($event, index)"
-            ></div>
+      <template v-if="!isPreviewMode">
+        <VueDraggable
+          v-model="childModules"
+          ghost-class="child-drag-ghost"
+          @update="onChildDragUpdate"
+          @dragover="handleDragOver"
+          @dragleave="handleDragLeave"
+          @drop="handleDrop"
+          :animation="200"
+        >
+          <ModuleItem
+            v-for="child in childModules"
+            :key="child.id"
+            :module="child"
+          />
 
-            <!-- 子模块 -->
-            <ModuleItem
-              :module="child"
-              @drag-start="handleModuleDragStart"
-            />
-
-            <!-- 最后一个模块后的放置线 -->
-            <div
-              v-if="index === module.children.length - 1"
-              class="child-drop-line"
-              :class="{ active: activeDropIndex === index + 1 }"
-              @dragover.prevent.stop="handleDropLineDragOver($event, index + 1)"
-              @drop.prevent.stop="handleDropAtIndex($event, index + 1)"
-            ></div>
+          <!-- 空容器提示 -->
+          <div v-if="childModules.length === 0" class="empty-hint" :key="'empty'">
+            <span>📦 拖拽模块到这里</span>
           </div>
-        </template>
-
-        <!-- 预览模式：直接渲染 -->
-        <ModuleItem v-for="child in module.children" :key="child.id" :module="child" v-else />
+        </VueDraggable>
       </template>
 
-      <!-- 空容器提示 -->
-      <div v-if="(!module.children || module.children.length === 0) && !isPreviewMode" class="empty-hint">
-        <span>📦 拖拽模块到这里</span>
-      </div>
+      <!-- 预览模式：直接渲染 -->
+      <template v-else>
+        <ModuleItem v-for="child in (module.children || [])" :key="child.id" :module="child" />
+      </template>
     </div>
   </div>
 </template>
@@ -207,40 +176,12 @@ function handleModuleDragStart(moduleId: string) {
   background-color: rgba(64, 158, 255, 0.05) !important;
 }
 
-/* 子模块插槽 */
-.child-slot {
-  position: relative;
-  margin-bottom: 4px;
-}
-
-/* 容器内放置线 */
-.child-drop-line {
-  height: 16px;
-  margin: -8px 0;
-  cursor: copy;
-  position: relative;
-  z-index: 500;
-  background-color: transparent;
-  pointer-events: auto;
-}
-
-.child-drop-line::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 3px;
-  background-color: transparent;
-  transform: translateY(-50%);
-  transition: all 0.15s ease;
-  border-radius: 1px;
-  pointer-events: none;
-}
-
-.child-drop-line.active::before {
-  background-color: #67c23a;
-  box-shadow: 0 0 10px rgba(103, 194, 58, 0.5);
+/* VueDraggable 拖拽幽灵样式 */
+.child-drag-ghost {
+  opacity: 0.4;
+  border: 2px dashed #67c23a;
+  background-color: rgba(103, 194, 58, 0.05);
+  border-radius: 4px;
 }
 
 /* 空容器提示 */
