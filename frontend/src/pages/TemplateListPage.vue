@@ -77,13 +77,16 @@ onMounted(loadLayouts)
     </div>
     <div v-else class="card-grid">
       <div v-for="layout in layouts" :key="layout.id" class="card">
-        <h3 class="card-title">{{ layout.name }}</h3>
+        <div class="card-title-row">
+          <h3 class="card-title">{{ layout.name }}</h3>
+          <span v-if="layout.isPreset" class="preset-badge">预设</span>
+        </div>
         <p v-if="layout.description" class="card-desc">{{ layout.description }}</p>
         <p class="card-meta">{{ new Date(layout.updatedAt).toLocaleString() }}</p>
         <div class="card-actions">
           <button class="btn-small primary" @click="createArticleFromTemplate(layout.id)">用此模板创建文章</button>
           <button class="btn-small" @click="editLayout(layout.id)">编辑模板</button>
-          <button class="btn-small danger" @click="deleteLayout(layout.id)">删除</button>
+          <button v-if="!layout.isPreset" class="btn-small danger" @click="deleteLayout(layout.id)">删除</button>
         </div>
       </div>
     </div>
@@ -102,6 +105,8 @@ onMounted(loadLayouts)
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
 .card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 8px; }
 .card-title { font-size: 15px; font-weight: 600; color: #111827; margin: 0; }
+.card-title-row { display: flex; align-items: center; gap: 8px; }
+.preset-badge { font-size: 11px; font-weight: 600; color: #8b5cf6; background: #ede9fe; padding: 2px 8px; border-radius: 4px; line-height: 1.5; }
 .card-desc { font-size: 13px; color: #6b7280; line-height: 1.4; }
 .card-meta { font-size: 12px; color: #9ca3af; }
 .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; flex-wrap: wrap; }

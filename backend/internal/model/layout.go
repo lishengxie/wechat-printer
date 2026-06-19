@@ -10,6 +10,7 @@ type Layout struct {
 	Content     string    `json:"content"`    // 排版内容（JSON格式的组件配置）
 	CSS         string    `json:"css"`        // 自定义样式
 	HTML        string    `json:"html"`       // 生成的 HTML
+	IsPreset    bool      `json:"is_preset"`  // 是否为预设模板
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

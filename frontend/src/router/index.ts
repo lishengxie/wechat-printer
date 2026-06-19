@@ -31,6 +31,11 @@ const router = createRouter({
           path: 'templates',
           name: 'TemplateList',
           component: () => import('@/pages/TemplateListPage.vue')
+        },
+        {
+          path: 'ai-config',
+          name: 'AIConfig',
+          component: () => import('@/pages/AIConfigPage.vue')
         }
       ]
     },

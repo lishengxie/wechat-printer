@@ -74,15 +74,15 @@ func (h *LayoutHandler) Update(c *gin.Context) {
 		return
 	}
 
-	// ownership check
-	ownerID, err := h.db.GetLayoutOwner(id)
+	// Check ownership: allow if admin, owner, or the layout is a preset
+	ownerID, isPreset, err := h.db.GetLayoutOwnerInfo(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "layout not found"})
 		return
 	}
 	userID, _ := c.Get("user_id")
 	role, _ := c.Get("role")
-	if role != "admin" && ownerID != userID.(string) {
+	if role != "admin" && !isPreset && ownerID != userID.(string) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
 		return
 	}

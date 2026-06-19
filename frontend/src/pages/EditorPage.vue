@@ -8,6 +8,7 @@ import ModuleLibrary from '@/components/ModuleLibrary.vue'
 import EditorCanvas from '@/components/EditorCanvas.vue'
 import PropertyPanel from '@/components/PropertyPanel.vue'
 import PreviewCanvas from '@/components/PreviewCanvas.vue'
+import AIChatDialog from '@/components/AIChatDialog.vue'
 import api from '@/services/api'
 
 const route = useRoute()
@@ -43,6 +44,10 @@ const exportedHTML = ref('')
 const isExporting = ref(false)
 const isSaving = ref(false)
 const saveMessage = ref('')
+
+// AI 助手面板
+const showAIPanel = ref(false)
+const selectedModuleForAI = computed(() => documentStore.selectedModule)
 
 // 计算撤销/重做可用状态
 const canUndo = computed(() => documentStore.canUndo())
@@ -208,6 +213,15 @@ function goBack() {
             <span class="btn-text">加载示例</span>
           </button>
           <button
+            class="action-btn ai-btn"
+            :class="{ 'is-active': showAIPanel }"
+            @click="showAIPanel = !showAIPanel"
+            title="AI 排版助手"
+          >
+            <span class="btn-icon">🤖</span>
+            <span class="btn-text">AI 助手</span>
+          </button>
+          <button
             class="action-btn"
             :disabled="!canUndo"
             @click="handleUndo"
@@ -260,20 +274,29 @@ function goBack() {
 
       <!-- 编辑模式 -->
       <template v-else>
-        <!-- 左侧：模块库 -->
-        <aside class="sidebar-left">
-          <ModuleLibrary />
-        </aside>
+        <div class="editor-body">
+          <!-- 左侧：模块库 -->
+          <aside class="sidebar-left">
+            <ModuleLibrary />
+          </aside>
 
-        <!-- 中间：编辑器画布 -->
-        <section class="editor-area">
-          <EditorCanvas />
-        </section>
+          <!-- 中间：编辑器画布 -->
+          <section class="editor-area">
+            <EditorCanvas />
+          </section>
 
-        <!-- 右侧：属性面板 -->
-        <aside class="sidebar-right">
-          <PropertyPanel />
-        </aside>
+          <!-- 右侧：属性面板 -->
+          <aside class="sidebar-right">
+            <PropertyPanel />
+          </aside>
+        </div>
+
+        <!-- AI 排版助手（页面底部常驻面板） -->
+        <AIChatDialog
+          :visible="showAIPanel"
+          :selected-module="selectedModuleForAI"
+          @toggle="showAIPanel = !showAIPanel"
+        />
       </template>
     </main>
 
@@ -453,6 +476,14 @@ body {
   cursor: not-allowed;
 }
 
+.action-btn.ai-btn {
+  color: #7c3aed;
+}
+
+.action-btn.ai-btn:hover {
+  background-color: #f5f3ff;
+}
+
 .toolbar-right {
   display: flex;
   align-items: center;
@@ -518,7 +549,15 @@ body {
 .main-content {
   flex: 1;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
+}
+
+.editor-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* 左侧边栏 - 模块库 */

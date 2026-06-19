@@ -13,6 +13,7 @@ const isAdmin = computed(() => authStore.isAdmin)
 const navItems = computed(() => [
   { path: '/dashboard/articles', label: '文章', icon: '📝' },
   { path: '/dashboard/templates', label: '模板库', icon: '📐' },
+  { path: '/dashboard/ai-config', label: 'AI 助手', icon: '🤖' },
   ...(isAdmin.value ? [{ path: '/admin/users', label: '用户管理', icon: '👥' }] : [])
 ])
 

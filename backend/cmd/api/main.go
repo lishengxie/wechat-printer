@@ -22,6 +22,7 @@ func main() {
 	authHandler := handler.NewAuthHandler(db)
 	layoutHandler := handler.NewLayoutHandler(db)
 	articleHandler := handler.NewArticleHandler(db)
+	aiHandler := handler.NewAIHandler(db)
 
 	// Setup Gin
 	r := gin.Default()
@@ -71,6 +72,11 @@ func main() {
 			admin.GET("/users", authHandler.GetUsers)
 			admin.DELETE("/users/:id", authHandler.DeleteUser)
 		}
+
+		// AI
+		authorized.GET("/ai/config", aiHandler.GetConfig)
+		authorized.PUT("/ai/config", aiHandler.UpdateConfig)
+		authorized.POST("/ai/chat", aiHandler.Chat)
 	}
 
 	port := os.Getenv("PORT")

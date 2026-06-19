@@ -9,6 +9,7 @@ export interface BackendLayout {
   content: string
   css: string
   html: string
+  is_preset: boolean
   created_at: string
   updated_at: string
 }
@@ -18,6 +19,7 @@ export interface Layout {
   name: string
   description?: string
   document: Document
+  isPreset: boolean
   createdAt: string
   updatedAt: string
 }
@@ -130,6 +132,7 @@ function backendToFrontend(backend: BackendLayout): Layout {
     name: backend.name,
     description: backend.description,
     document,
+    isPreset: !!backend.is_preset,
     createdAt: backend.created_at,
     updatedAt: backend.updated_at
   }
@@ -354,6 +357,48 @@ function generateHTMLFromDocument(document: Document): string {
   <p style="color: #9ca3af; margin: 0 0 20px 0; padding-bottom: 16px; border-bottom: 1px solid #eee;">${document.updatedAt || document.createdAt || ''}</p>
   ${bodyHtml}
 </section>`
+}
+
+export interface AIChatRequest {
+  prompt: string
+  module: any
+}
+
+export interface AIChatResponse {
+  explanation: string
+  updated_module: string
+}
+
+export interface AIConfigData {
+  api_key: string
+  api_base: string
+  model: string
+}
+
+export const apiAI = {
+  async chat(data: AIChatRequest): Promise<AIChatResponse> {
+    const response = await request<{ data: AIChatResponse }>('/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        prompt: data.prompt,
+        module: JSON.stringify(data.module)
+      })
+    })
+    return response.data
+  },
+
+  async getConfig(): Promise<AIConfigData> {
+    const response = await request<{ data: AIConfigData }>('/ai/config', { method: 'GET' })
+    return response.data
+  },
+
+  async updateConfig(data: AIConfigData): Promise<AIConfigData> {
+    const response = await request<{ data: AIConfigData }>('/ai/config', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+    return response.data
+  }
 }
 
 export default api
