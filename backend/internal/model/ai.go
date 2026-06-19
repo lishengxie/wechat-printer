@@ -4,6 +4,7 @@ package model
 type AIChatRequest struct {
 	Prompt string `json:"prompt" binding:"required"`
 	Module string `json:"module" binding:"required"` // 当前模块的 JSON
+	Mode   string `json:"mode"`                       // "style" | "full", 默认 "full"
 }
 
 // AIChatResponse AI 返回的响应
