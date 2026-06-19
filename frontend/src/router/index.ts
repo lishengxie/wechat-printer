@@ -28,25 +28,20 @@ const router = createRouter({
           component: () => import('@/pages/ArticleListPage.vue')
         },
         {
-          path: 'articles/new',
-          name: 'ArticleNew',
-          component: () => import('@/pages/ArticleEditorPage.vue')
-        },
-        {
-          path: 'articles/:id/edit',
-          name: 'ArticleEdit',
-          component: () => import('@/pages/ArticleEditorPage.vue')
-        },
-        {
-          path: 'layouts',
-          name: 'LayoutList',
-          component: () => import('@/pages/LayoutListPage.vue')
+          path: 'templates',
+          name: 'TemplateList',
+          component: () => import('@/pages/TemplateListPage.vue')
         }
       ]
     },
     {
-      path: '/editor/:layoutId',
-      name: 'Editor',
+      path: '/editor/article/:articleId',
+      name: 'ArticleEditor',
+      component: () => import('@/pages/EditorPage.vue')
+    },
+    {
+      path: '/editor/template/:layoutId',
+      name: 'TemplateEditor',
       component: () => import('@/pages/EditorPage.vue')
     },
     {
