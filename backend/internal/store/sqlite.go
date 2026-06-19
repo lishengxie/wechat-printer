@@ -124,6 +124,9 @@ func (s *SQLiteDB) initTables() error {
 		return err
 	}
 
+	// Attempt to add content column if it doesn't exist (safe to ignore error if already present)
+	_, _ = s.db.Exec(`ALTER TABLE articles ADD COLUMN content TEXT DEFAULT ''`)
+
 	return s.seedDefaultAdmin()
 }
 
@@ -372,16 +375,17 @@ func (s *SQLiteDB) CreateArticle(req *model.CreateArticleRequest, userID string)
 		Author:     req.Author,
 		Summary:    req.Summary,
 		CoverImage: req.CoverImage,
+		Content:    req.Content,
 		Status:     "draft",
 		Deleted:    0,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
 	_, err := s.db.Exec(
-		`INSERT INTO articles (id, user_id, layout_id, title, author, summary, cover_image, status, deleted, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO articles (id, user_id, layout_id, title, author, summary, cover_image, content, status, deleted, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		article.ID, article.UserID, article.LayoutID, article.Title, article.Author,
-		article.Summary, article.CoverImage, article.Status, article.Deleted, article.CreatedAt, article.UpdatedAt,
+		article.Summary, article.CoverImage, article.Content, article.Status, article.Deleted, article.CreatedAt, article.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -392,11 +396,11 @@ func (s *SQLiteDB) CreateArticle(req *model.CreateArticleRequest, userID string)
 // GetArticleByID returns an article by ID (checking deleted = 0)
 func (s *SQLiteDB) GetArticleByID(id string) (*model.Article, error) {
 	article := &model.Article{}
-	query := `SELECT id, user_id, layout_id, title, author, summary, cover_image, status, deleted, created_at, updated_at
+	query := `SELECT id, user_id, layout_id, title, author, summary, cover_image, content, status, deleted, created_at, updated_at
 			  FROM articles WHERE id = ? AND deleted = 0`
 	err := s.db.QueryRow(query, id).Scan(
 		&article.ID, &article.UserID, &article.LayoutID, &article.Title, &article.Author,
-		&article.Summary, &article.CoverImage, &article.Status, &article.Deleted,
+		&article.Summary, &article.CoverImage, &article.Content, &article.Status, &article.Deleted,
 		&article.CreatedAt, &article.UpdatedAt,
 	)
 	if err != nil {
@@ -414,11 +418,11 @@ func (s *SQLiteDB) GetArticlesByUser(userID string) ([]*model.Article, error) {
 	var err error
 	if userID != "" {
 		rows, err = s.db.Query(
-			`SELECT id, user_id, layout_id, title, author, summary, cover_image, status, deleted, created_at, updated_at
+			`SELECT id, user_id, layout_id, title, author, summary, cover_image, content, status, deleted, created_at, updated_at
 			 FROM articles WHERE user_id = ? AND deleted = 0 ORDER BY updated_at DESC`, userID)
 	} else {
 		rows, err = s.db.Query(
-			`SELECT id, user_id, layout_id, title, author, summary, cover_image, status, deleted, created_at, updated_at
+			`SELECT id, user_id, layout_id, title, author, summary, cover_image, content, status, deleted, created_at, updated_at
 			 FROM articles WHERE deleted = 0 ORDER BY updated_at DESC`)
 	}
 	if err != nil {
@@ -431,7 +435,7 @@ func (s *SQLiteDB) GetArticlesByUser(userID string) ([]*model.Article, error) {
 		a := &model.Article{}
 		if err := rows.Scan(
 			&a.ID, &a.UserID, &a.LayoutID, &a.Title, &a.Author,
-			&a.Summary, &a.CoverImage, &a.Status, &a.Deleted,
+			&a.Summary, &a.CoverImage, &a.Content, &a.Status, &a.Deleted,
 			&a.CreatedAt, &a.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -465,11 +469,12 @@ func (s *SQLiteDB) UpdateArticle(id string, req *model.UpdateArticleRequest) (*m
 	if req.Status != "" {
 		article.Status = req.Status
 	}
+	article.Content = req.Content
 	article.UpdatedAt = time.Now()
 
 	_, err = s.db.Exec(
-		`UPDATE articles SET title = ?, layout_id = ?, author = ?, summary = ?, cover_image = ?, status = ?, updated_at = ? WHERE id = ?`,
-		article.Title, article.LayoutID, article.Author, article.Summary, article.CoverImage, article.Status, article.UpdatedAt, id,
+		`UPDATE articles SET title = ?, layout_id = ?, author = ?, summary = ?, cover_image = ?, content = ?, status = ?, updated_at = ? WHERE id = ?`,
+		article.Title, article.LayoutID, article.Author, article.Summary, article.CoverImage, article.Content, article.Status, article.UpdatedAt, id,
 	)
 	if err != nil {
 		return nil, err

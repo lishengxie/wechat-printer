@@ -11,6 +11,7 @@ type Article struct {
 	Author     string    `json:"author"`
 	Summary    string    `json:"summary"`
 	CoverImage string    `json:"cover_image"`
+	Content    string    `json:"content"`
 	Status     string    `json:"status"`
 	Deleted    int       `json:"-"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -20,10 +21,11 @@ type Article struct {
 // CreateArticleRequest payload for creating an article
 type CreateArticleRequest struct {
 	Title      string `json:"title" binding:"required"`
-	LayoutID   string `json:"layout_id" binding:"required"`
+	LayoutID   string `json:"layout_id"`
 	Author     string `json:"author"`
 	Summary    string `json:"summary"`
 	CoverImage string `json:"cover_image"`
+	Content    string `json:"content"`
 }
 
 // UpdateArticleRequest payload for updating an article
@@ -33,5 +35,6 @@ type UpdateArticleRequest struct {
 	Author     string `json:"author"`
 	Summary    string `json:"summary"`
 	CoverImage string `json:"cover_image"`
+	Content    string `json:"content"`
 	Status     string `json:"status" binding:"omitempty,oneof=draft published"`
 }
