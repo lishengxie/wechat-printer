@@ -30,6 +30,7 @@ export interface Article {
   author: string
   summary: string
   cover_image: string
+  content: string
   status: 'draft' | 'published'
   created_at: string
   updated_at: string
@@ -49,10 +50,11 @@ export interface LayoutUpdateInput {
 
 export interface ArticleCreateInput {
   title: string
-  layout_id: string
+  layout_id?: string
   author?: string
   summary?: string
   cover_image?: string
+  content?: string
 }
 
 export interface ArticleUpdateInput {
@@ -61,6 +63,7 @@ export interface ArticleUpdateInput {
   author?: string
   summary?: string
   cover_image?: string
+  content?: string
   status?: 'draft' | 'published'
 }
 
