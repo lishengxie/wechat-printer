@@ -87,8 +87,7 @@ onMounted(loadData)
         <button class="btn-primary" @click="showCreateModal = true">+ 新建文章</button>
       </div>
     </div>
-    <p v-if="loading" class="status">加载中...</p>
-    <p v-else-if="error" class="status error">{{ error }}</p>
+    <p v-if="error" class="status error">{{ error }}</p>
     <div v-else-if="articles.length === 0" class="empty">
       <p>还没有文章，点击右上角新建</p>
     </div>
