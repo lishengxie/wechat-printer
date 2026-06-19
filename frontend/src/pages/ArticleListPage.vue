@@ -83,7 +83,6 @@ onMounted(loadData)
     <div class="page-header">
       <h2>我的文章</h2>
       <div class="actions">
-        <button class="btn-secondary" @click="router.push('/dashboard/templates')">模板库</button>
         <button class="btn-primary" @click="showCreateModal = true">+ 新建文章</button>
       </div>
     </div>
@@ -95,7 +94,7 @@ onMounted(loadData)
       <div v-for="article in articles" :key="article.id" class="card">
         <div class="card-header">
           <h3 class="card-title">{{ article.title }}</h3>
-          <span class="badge" :class="article.status">{{ article.status === 'published' ? '已发布' : '草稿' }}</span>
+          <span class="badge" :class="article.status">{{ article.status === 'published' ? '已发布' : '已保存' }}</span>
         </div>
         <p v-if="article.summary" class="card-summary">{{ article.summary }}</p>
         <div class="card-meta">
@@ -159,12 +158,12 @@ onMounted(loadData)
 .card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 10px; }
 .card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .card-title { font-size: 15px; font-weight: 600; color: #111827; margin: 0; }
-.badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; }
+.badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
 .badge.draft { background: #f3f4f6; color: #6b7280; }
 .badge.published { background: #d1fae5; color: #065f46; }
 .card-summary { font-size: 13px; color: #6b7280; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .card-meta { font-size: 12px; color: #9ca3af; display: flex; gap: 12px; }
-.card-actions { display: flex; gap: 8px; margin-top: 4px; }
+.card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; }
 .btn-small { padding: 5px 12px; font-size: 12px; font-weight: 500; border-radius: 5px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; }
 .btn-small:hover { background: #f9fafb; }
 .btn-small.danger { color: #dc2626; border-color: #fecaca; }

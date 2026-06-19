@@ -139,10 +139,19 @@ async function handleExportHTML() {
 
 async function copyToClipboard() {
   try {
-    await navigator.clipboard.writeText(exportedHTML.value)
-    alert('HTML 已复制到剪贴板！')
+    const html = exportedHTML.value
+    const blob = new Blob([html], { type: 'text/html' })
+    const textBlob = new Blob([html.replace(/<[^>]+>/g, '')], { type: 'text/plain' })
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': blob,
+        'text/plain': textBlob
+      })
+    ])
+    alert('HTML 已复制到剪贴板！可直接粘贴到公众号编辑器')
   } catch (error) {
     console.error('Copy failed:', error)
+    alert('复制失败，请手动复制')
   }
 }
 
@@ -166,7 +175,7 @@ function goBack() {
     <header class="toolbar">
       <div class="toolbar-left">
         <div class="logo">
-          <button class="back-btn" @click="goBack" title="返回">←</button>
+          <button class="back-btn" @click="goBack">← 返回</button>
           <span class="logo-icon">📰</span>
           <span class="logo-text">公众号排版编辑器</span>
         </div>
@@ -196,7 +205,7 @@ function goBack() {
             title="加载测试数据"
           >
             <span class="btn-icon">📋</span>
-            <span class="btn-text">加载演示</span>
+            <span class="btn-text">加载示例</span>
           </button>
           <button
             class="action-btn"
@@ -350,21 +359,22 @@ body {
 }
 
 .back-btn {
-  width: 28px;
-  height: 28px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  color: #6b7280;
-  background: transparent;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: #374151;
+  background: #f3f4f6;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .back-btn:hover {
-  background: #f3f4f6;
+  background: #e5e7eb;
+  color: #111827;
 }
 
 .logo-icon {

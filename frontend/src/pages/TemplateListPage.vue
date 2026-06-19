@@ -104,7 +104,7 @@ onMounted(loadLayouts)
 .card-title { font-size: 15px; font-weight: 600; color: #111827; margin: 0; }
 .card-desc { font-size: 13px; color: #6b7280; line-height: 1.4; }
 .card-meta { font-size: 12px; color: #9ca3af; }
-.card-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; flex-wrap: wrap; }
 .btn-small { padding: 5px 12px; font-size: 12px; font-weight: 500; border-radius: 5px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; }
 .btn-small:hover { background: #f9fafb; }
 .btn-small.primary { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }

@@ -246,116 +246,114 @@ export const api = {
 }
 
 function generateHTMLFromDocument(document: Document): string {
-  const styles = `
-    <style>
-      .wechat-layout { max-width: 640px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-      .wechat-module { margin: 0 0 16px 0; }
-      .wechat-text { font-size: 16px; line-height: 1.6; color: #333; }
-      .wechat-image img { max-width: 100%; height: auto; display: block; }
-      .wechat-divider { border: none; border-top: 2px solid #e5e7eb; margin: 16px 0; }
-      .wechat-button { display: inline-block; padding: 12px 24px; background: #3b82f6; color: #fff; text-decoration: none; border-radius: 8px; text-align: center; }
-      .wechat-container { display: flex; gap: 16px; }
-      .wechat-container.single { flex-direction: column; }
-      .wechat-container.two-column > * { flex: 1; }
-      .wechat-container.three-column > * { flex: 1; }
-      .wechat-header { text-align: center; padding: 24px 16px; background: #f8fafc; border-radius: 8px; }
-      .wechat-header h1 { font-size: 24px; font-weight: bold; color: #1f2937; margin: 0 0 8px 0; }
-      .wechat-header .subtitle { font-size: 15px; color: #6b7280; margin: 0 0 16px 0; }
-      .wechat-footer { text-align: center; padding: 16px; font-size: 13px; color: #9ca3af; }
-      .wechat-toc { padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e5e7eb; }
-      .wechat-toc h3 { font-size: 16px; font-weight: bold; color: #1f2937; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb; }
-      .wechat-toc ul { list-style: none; padding: 0; margin: 0; }
-      .wechat-toc li { display: flex; align-items: center; margin: 6px 0; }
-      .wechat-toc .bullet { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; }
-    </style>
-  `
+  // WeChat-safe HTML generator
+  // Only uses supported tags: section, p, span, strong, img
+  // Only uses supported inline styles: color, text-align, background-color,
+  // font-size, font-weight, margin, padding, border-bottom, display (inline-block),
+  // vertical-align, width
 
-  function renderModule(module: any): string {
-    switch (module.type) {
-      case 'text':
-        return `<div class="wechat-module wechat-text" style="${getStyleString(module.styles)}">${module.props.content}</div>`
-      case 'image':
-        return `<div class="wechat-module wechat-image" style="${getStyleString(module.styles)}"><img src="${module.props.src}" alt="${module.props.alt}"></div>`
-      case 'divider':
-        return `<hr class="wechat-module wechat-divider" style="border-top-color: ${module.props.color || '#e5e7eb'}; border-top-style: ${module.props.style || 'solid'};">`
-      case 'button':
-        return `<div class="wechat-module" style="text-align: ${module.styles.textAlign || 'center'};"><a href="${module.props.link}" class="wechat-button">${module.props.text}</a></div>`
-      case 'container':
-        return `<div class="wechat-module wechat-container ${module.props.layout}" style="${getStyleString(module.styles)}">${module.children?.map((c: any) => renderModule(c)).join('') || ''}</div>`
-      case 'header':
-        return renderHeaderModule(module)
-      case 'footer':
-        return renderFooterModule(module)
-      case 'toc':
-        return renderTocModule(module)
-      default:
-        return ''
-    }
-  }
-
-  function getStyleString(styles: any): string {
+  function getInlineStyle(styles: any): string {
     return Object.entries(styles)
       .filter(([, value]) => value && value !== 'transparent')
       .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
       .join('; ')
   }
 
-  function renderHeaderModule(module: any): string {
+  function renderModule(module: any): string {
+    const baseStyle = 'margin: 0 0 16px 0;' + getInlineStyle(module.styles)
+    switch (module.type) {
+      case 'text':
+        return `<section style="${baseStyle}"><p style="margin: 0;">${module.props.content}</p></section>`
+      case 'image':
+        return `<section style="${baseStyle}text-align: center;"><img src="${module.props.src}" alt="${module.props.alt || ''}" style="max-width: 100%; height: auto;" /></section>`
+      case 'divider':
+        return `<section style="${baseStyle}text-align: center;"><p style="margin: 0; border-bottom: 2px solid ${module.props.color || '#e5e7eb'}; line-height: 0; font-size: 0;">&nbsp;</p></section>`
+      case 'button':
+        return `<section style="${baseStyle}text-align: ${module.styles.textAlign || 'center'};"><span style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: #ffffff;">${module.props.text}</span></section>`
+      case 'container':
+        return renderContainer(module, baseStyle)
+      case 'header':
+        return renderHeader(module)
+      case 'footer':
+        return renderFooter(module)
+      case 'toc':
+        return renderToc(module)
+      default:
+        return ''
+    }
+  }
+
+  function renderContainer(module: any, baseStyle: string): string {
+    const layout = module.props.layout || 'single'
+    const children = module.children?.map((c: any) => renderModule(c)).join('') || ''
+    if (layout === 'single') {
+      return `<section style="${baseStyle}">${children}</section>`
+    }
+    const colCount = layout === 'three-column' ? 3 : 2
+    const childrenArr = module.children || []
+    const cols = childrenArr.map((child: any) => {
+      const html = renderModule(child)
+      return `<td style="vertical-align: top; padding: 0 8px; width: ${100 / colCount}%;">${html}</td>`
+    }).join('')
+    return `<section style="${baseStyle}"><table style="width: 100%;"><tr>${cols}</tr></table></section>`
+  }
+
+  function renderHeader(module: any): string {
     const p = module.props
     const s = module.styles
-    return `<div class="wechat-module wechat-header" style="${getStyleString(s)}; text-align: ${s.textAlign || 'center'};">
-  <h1 style="font-size: ${s.fontSize || '24px'}; color: ${s.color || '#1f2937'}; font-weight: ${s.fontWeight || 'bold'}; margin: 0 0 8px 0; line-height: 1.4;">${p.title}</h1>
-  ${p.subtitle ? `<p style="font-size: 15px; color: #6b7280; margin: 0 0 16px 0; line-height: 1.6;">${p.subtitle}</p>` : ''}
-  <div style="font-size: 13px; color: #9ca3af; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+    const align = s.textAlign || 'center'
+    return `<section style="margin: 0 0 16px 0; padding: 24px 16px; background: #f8fafc; text-align: ${align};">
+  <p style="color: ${s.color || '#1f2937'}; font-weight: bold; margin: 0 0 8px 0;">${p.title}</p>
+  ${p.subtitle ? `<p style="color: #6b7280; margin: 0 0 16px 0;">${p.subtitle}</p>` : ''}
+  <p style="color: #9ca3af; margin: 0;">
     ${p.showAuthor && p.author ? `<span>${p.author}</span>` : ''}
+    ${p.showAuthor && p.author && p.showDate && p.date ? '&nbsp;&nbsp;' : ''}
     ${p.showDate && p.date ? `<span>${p.date}</span>` : ''}
-  </div>
-</div>`
+  </p>
+</section>`
   }
 
-  function renderFooterModule(module: any): string {
+  function renderFooter(module: any): string {
     const p = module.props
     const s = module.styles
-    return `<div class="wechat-module wechat-footer" style="${getStyleString(s)}; text-align: ${s.textAlign || 'center'};">
-  ${p.showDivider ? `<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0 0 16px 0;" />` : ''}
-  ${p.text ? `<p style="font-size: ${s.fontSize || '13px'}; color: ${s.color || '#6b7280'}; margin: 0 0 8px 0; line-height: 1.6;">${p.text}</p>` : ''}
-  ${p.copyright ? `<p style="font-size: 12px; color: #9ca3af; margin: 0;">${p.copyright}</p>` : ''}
-</div>`
+    let html = `<section style="margin: 0 0 16px 0; text-align: ${s.textAlign || 'center'}; padding: 16px;">`
+    if (p.showDivider) {
+      html += `<p style="margin: 0 0 16px 0; border-bottom: 1px solid #e5e7eb; line-height: 0; font-size: 0;">&nbsp;</p>`
+    }
+    if (p.text) {
+      html += `<p style="color: ${s.color || '#6b7280'}; margin: 0 0 8px 0;">${p.text}</p>`
+    }
+    if (p.copyright) {
+      html += `<p style="color: #9ca3af; margin: 0;">${p.copyright}</p>`
+    }
+    html += '</section>'
+    return html
   }
 
-  function renderTocModule(module: any): string {
+  function renderToc(module: any): string {
     const p = module.props
-    const items = p.items.map((item: any) => `
-      <li style="display: flex; align-items: center; margin: 6px 0; padding-left: ${item.level * 16}px;">
-        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${item.level === 0 ? '#3b82f6' : '#93c5fd'}; margin-right: 8px;"></span>
-        <span style="font-size: ${item.level === 0 ? '14px' : '13px'}; font-weight: ${item.level === 0 ? '500' : 'normal'}; color: ${item.level === 0 ? '#374151' : '#6b7280'}; line-height: 1.5;">${item.text}</span>
-      </li>`
-    ).join('')
-
-    return `<div class="wechat-module wechat-toc" style="${getStyleString(module.styles)}">
-  <h3>${p.title}</h3>
-  <ul>${items}</ul>
-</div>`
+    const items = (p.items || []).map((item: any) => {
+      const pad = (item.level || 0) * 16
+      const bulletColor = item.level === 0 ? '#3b82f6' : '#93c5fd'
+      const fw = item.level === 0 ? 'bold' : 'normal'
+      const color = item.level === 0 ? '#374151' : '#6b7280'
+      return `<p style="margin: 6px 0; padding-left: ${pad}px;">
+  <span style="display: inline-block; width: 6px; height: 6px; background: ${bulletColor}; margin-right: 8px; vertical-align: middle;"></span>
+  <span style="font-weight: ${fw}; color: ${color};">${item.text}</span>
+</p>`
+    }).join('')
+    return `<section style="margin: 0 0 16px 0; padding: 16px; background: #f8fafc; border: 1px solid #e5e7eb;">
+  <p style="font-weight: bold; color: #1f2937; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb;">${p.title}</p>
+  ${items}
+</section>`
   }
 
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${document.title}</title>
-  ${styles}
-</head>
-<body>
-  <div class="wechat-layout">
-    <h1>${document.title}</h1>
-    <p style="color: #666; font-size: 14px;">创建时间: ${document.createdAt}</p>
-    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-    <div class="wechat-content">${document.root.children?.map((child: any) => renderModule(child)).join('') || ''}</div>
-  </div>
-</body>
-</html>`
+  const bodyHtml = document.root.children?.map((child: any) => renderModule(child)).join('') || ''
+  return `<section style="max-width: 640px; margin: 0 auto; color: #333;">
+  <p style="font-weight: bold; color: #1f2937; margin: 0 0 8px 0;">${document.title}</p>
+  <p style="color: #9ca3af; margin: 0 0 20px 0; padding-bottom: 16px; border-bottom: 1px solid #eee;">${document.updatedAt || document.createdAt || ''}</p>
+  ${bodyHtml}
+</section>`
 }
 
 export default api
