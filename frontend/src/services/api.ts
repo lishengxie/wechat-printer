@@ -267,8 +267,13 @@ function generateHTMLFromDocument(document: Document): string {
     switch (module.type) {
       case 'text':
         return `<section style="${baseStyle}"><p style="margin: 0;">${module.props.content}</p></section>`
-      case 'image':
-        return `<section style="${baseStyle}text-align: center;"><img src="${module.props.src}" alt="${module.props.alt || ''}" style="max-width: 100%; height: auto;" /></section>`
+      case 'image': {
+        const img = `<section style="${baseStyle}text-align: center;"><img src="${module.props.src}" alt="${module.props.alt || ''}" style="max-width: 100%; height: auto;" /></section>`
+        const caption = module.props.caption
+          ? `<p style="margin: 8px 0 0 0; font-size: ${module.props.captionStyle?.fontSize || '13px'}; color: ${module.props.captionStyle?.color || '#9ca3af'}; font-style: ${module.props.captionStyle?.italic ? 'italic' : 'normal'}; text-align: ${module.props.captionStyle?.textAlign || 'center'};">${module.props.caption}</p>`
+          : ''
+        return img + caption
+      }
       case 'divider':
         return `<section style="${baseStyle}text-align: center;"><p style="margin: 0; border-bottom: 2px solid ${module.props.color || '#e5e7eb'}; line-height: 0; font-size: 0;">&nbsp;</p></section>`
       case 'button':
@@ -362,6 +367,7 @@ function generateHTMLFromDocument(document: Document): string {
 export interface AIChatRequest {
   prompt: string
   module: any
+  mode?: 'style' | 'full'
 }
 
 export interface AIChatResponse {
@@ -381,7 +387,8 @@ export const apiAI = {
       method: 'POST',
       body: JSON.stringify({
         prompt: data.prompt,
-        module: JSON.stringify(data.module)
+        module: JSON.stringify(data.module),
+        mode: data.mode || 'full'
       })
     })
     return response.data
