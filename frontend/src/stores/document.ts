@@ -421,6 +421,18 @@ export const useDocumentStore = defineStore('document', () => {
     document.value = newDocument
   }
 
+  function reorderRootChildren(orderedIds: string[]) {
+    saveToHistory()
+    const newDocument = JSON.parse(JSON.stringify(document.value))
+    const children = newDocument.root.children || []
+    const moduleMap = new Map(children.map((m: Module) => [m.id, m]))
+    newDocument.root.children = orderedIds
+      .map((id: string) => moduleMap.get(id))
+      .filter(Boolean)
+    newDocument.updatedAt = new Date().toISOString()
+    document.value = newDocument
+  }
+
   function moveModule(moduleId: string, newParentId: string | null, newIndex: number) {
     saveToHistory()
 
@@ -544,6 +556,7 @@ export const useDocumentStore = defineStore('document', () => {
     addModule,
     removeModule,
     moveModule,
+    reorderRootChildren,
     updateModuleStyles,
     updateModuleProps,
     replaceModule,
