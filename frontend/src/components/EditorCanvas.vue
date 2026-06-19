@@ -22,7 +22,7 @@ watch(() => document.value.root.children, (newChildren) => {
   } else {
     moduleList.value = []
   }
-}, { immediate: true, deep: true })
+}, { immediate: true })
 
 const isEmpty = computed(() => moduleList.value.length === 0)
 
@@ -50,6 +50,9 @@ function onCanvasDrop(event: DragEvent) {
   event.preventDefault()
   isDragOverCanvas.value = false
 
+  const existingModuleId = event.dataTransfer?.getData('moduleId')
+  if (existingModuleId) return // 排序由 VueDraggable 处理
+
   const moduleType = event.dataTransfer?.getData('moduleType') as ModuleType
   if (moduleType) {
     const variant = event.dataTransfer?.getData('moduleVariant')
@@ -61,10 +64,14 @@ function onCanvasDrop(event: DragEvent) {
   }
 }
 
-// VueDraggable 排序变更处理
-function onDragChange() {
+// VueDraggable 排序变更处理（仅响应元素位置变更，不响应外部添加）
+function onDragUpdate() {
   const orderedIds = moduleList.value.map(m => m.id)
-  documentStore.reorderRootChildren(orderedIds)
+  const currentIds = (document.value.root.children || []).map(m => m.id)
+  // 仅在顺序真正改变时同步 store（moduleList 是 document 的独立副本）
+  if (JSON.stringify(orderedIds) !== JSON.stringify(currentIds)) {
+    documentStore.reorderRootChildren(orderedIds)
+  }
 }
 </script>
 
@@ -90,7 +97,7 @@ function onDragChange() {
         <VueDraggable
           v-model="moduleList"
           ghost-class="drag-ghost"
-          @change="onDragChange"
+          @update="onDragUpdate"
           @dragover="onCanvasDragOver"
           @dragleave="onCanvasDragLeave"
           @drop="onCanvasDrop"
