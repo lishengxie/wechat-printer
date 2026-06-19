@@ -2,7 +2,6 @@
 import { ref, inject, computed, watch } from 'vue'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, ContainerModuleProps, ModuleType } from '@/types/document'
-import { useDragState } from '@/composables/useDragState'
 import { createModule } from '@/types/document'
 import ModuleItem from '../ModuleItem.vue'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -13,7 +12,6 @@ interface Props {
 
 const props = defineProps<Props>()
 const documentStore = useDocumentStore()
-const { getDraggingType } = useDragState()
 
 // 注入预览模式标志
 const isPreviewMode = inject('isPreviewMode', ref(false))

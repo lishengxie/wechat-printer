@@ -4,6 +4,8 @@ import { useEditor, EditorContent } from '@tiptap/vue-3'
 import { BubbleMenu } from '@tiptap/vue-3/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
+import { TextStyle } from '@tiptap/extension-text-style'
+import { Color } from '@tiptap/extension-color'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, TextModuleProps } from '@/types/document'
 
@@ -16,21 +18,25 @@ const props = defineProps<Props>()
 const documentStore = useDocumentStore()
 const isPreviewMode = inject('isPreviewMode', ref(false))
 
-const showFloatingToolbar = ref(false)
-
 const editor = useEditor({
   content: props.module.props.content,
   extensions: [
     StarterKit.configure({
-      heading: false, // 禁用标题，保持文本简单
+      heading: {
+        levels: [2, 3]
+      },
       code: true,
       codeBlock: false,
-      blockquote: false,
+      blockquote: true,
       horizontalRule: false,
+      bulletList: true,
+      orderedList: true,
       history: {
         depth: 50
       }
     }),
+    TextStyle,
+    Color,
     Link.configure({
       openOnClick: false,
       HTMLAttributes: {
@@ -45,9 +51,6 @@ const editor = useEditor({
     if (html !== props.module.props.content) {
       documentStore.updateModuleProps(props.module.id, { content: html })
     }
-  },
-  onSelectionUpdate: () => {
-    showFloatingToolbar.value = editor.value ? !editor.value.state.selection.empty : false
   }
 })
 
@@ -90,6 +93,14 @@ function handlePaste(event: ClipboardEvent) {
   editor.value?.chain().focus().insertContent(text).run()
 }
 
+function shouldShowBubbleMenu({ editor }: { editor: any }) {
+  if (isPreviewMode.value) return false
+  if (!editor) return false
+  if (editor.state.selection.empty) return false
+  return true
+}
+
+// 文字格式
 function toggleBold() {
   editor.value?.chain().focus().toggleBold().run()
 }
@@ -106,6 +117,26 @@ function toggleCode() {
   editor.value?.chain().focus().toggleCode().run()
 }
 
+// 标题
+function toggleHeading(level: 2 | 3) {
+  editor.value?.chain().focus().toggleHeading({ level }).run()
+}
+
+// 列表
+function toggleBulletList() {
+  editor.value?.chain().focus().toggleBulletList().run()
+}
+
+function toggleOrderedList() {
+  editor.value?.chain().focus().toggleOrderedList().run()
+}
+
+// 引用
+function toggleBlockquote() {
+  editor.value?.chain().focus().toggleBlockquote().run()
+}
+
+// 链接
 function setLink() {
   const previousUrl = editor.value?.getAttributes('link').href
   const url = window.prompt('输入链接地址', previousUrl || 'https://')
@@ -120,6 +151,25 @@ function setLink() {
 function unsetLink() {
   editor.value?.chain().focus().unsetLink().run()
 }
+
+// 文字颜色
+function setTextColor(event: Event) {
+  const color = (event.target as HTMLInputElement).value
+  editor.value?.chain().focus().setColor(color).run()
+}
+
+function unsetTextColor() {
+  editor.value?.chain().focus().unsetColor().run()
+}
+
+// 撤销/重做
+function undo() {
+  editor.value?.chain().focus().undo().run()
+}
+
+function redo() {
+  editor.value?.chain().focus().redo().run()
+}
 </script>
 
 <template>
@@ -130,7 +180,7 @@ function unsetLink() {
     <div v-if="editor" class="editor-wrapper" :style="editorStyle">
       <BubbleMenu
         :editor="editor"
-        v-if="!isPreviewMode && showFloatingToolbar"
+        :should-show="shouldShowBubbleMenu"
         :tippy-options="{ duration: 150, placement: 'top' }"
         class="format-toolbar"
       >
@@ -168,7 +218,59 @@ function unsetLink() {
             <span style="font-family: monospace;">&lt;/&gt;</span>
           </button>
         </div>
+
         <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
+          <button
+            class="toolbar-btn"
+            :class="{ active: editor.isActive('heading', { level: 2 }) }"
+            @click="toggleHeading(2)"
+            title="二级标题"
+          >
+            <span style="font-weight: bold; font-size: 14px;">H2</span>
+          </button>
+          <button
+            class="toolbar-btn"
+            :class="{ active: editor.isActive('heading', { level: 3 }) }"
+            @click="toggleHeading(3)"
+            title="三级标题"
+          >
+            <span style="font-weight: bold; font-size: 12px;">H3</span>
+          </button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
+          <button
+            class="toolbar-btn"
+            :class="{ active: editor.isActive('bulletList') }"
+            @click="toggleBulletList"
+            title="无序列表"
+          >
+            <span style="font-size: 16px;">&#8226;</span>
+          </button>
+          <button
+            class="toolbar-btn"
+            :class="{ active: editor.isActive('orderedList') }"
+            @click="toggleOrderedList"
+            title="有序列表"
+          >
+            <span style="font-size: 14px; font-weight: bold;">1.</span>
+          </button>
+          <button
+            class="toolbar-btn"
+            :class="{ active: editor.isActive('blockquote') }"
+            @click="toggleBlockquote"
+            title="引用"
+          >
+            <span style="font-size: 16px;">&#10077;</span>
+          </button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
         <div class="toolbar-group">
           <button
             v-if="!editor.isActive('link')"
@@ -176,7 +278,7 @@ function unsetLink() {
             @click="setLink"
             title="插入链接"
           >
-            🔗
+            <span style="font-size: 14px;">&#128279;</span>
           </button>
           <button
             v-if="editor.isActive('link')"
@@ -184,7 +286,38 @@ function unsetLink() {
             @click="unsetLink"
             title="取消链接"
           >
-            🔗
+            <span style="font-size: 14px;">&#128279;</span>
+          </button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
+          <input
+            type="color"
+            class="color-input"
+            :value="editor.getAttributes('textStyle').color || '#000000'"
+            @input="setTextColor"
+            title="文字颜色"
+          />
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
+          <button
+            class="toolbar-btn"
+            @click="undo"
+            title="撤销"
+          >
+            <span style="font-size: 14px;">&#8630;</span>
+          </button>
+          <button
+            class="toolbar-btn"
+            @click="redo"
+            title="重做"
+          >
+            <span style="font-size: 14px;">&#8631;</span>
           </button>
         </div>
       </BubbleMenu>
@@ -248,6 +381,38 @@ function unsetLink() {
   cursor: pointer;
 }
 
+.editor-content :deep(h2) {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 16px 0 8px 0;
+  color: #111827;
+}
+
+.editor-content :deep(h3) {
+  font-size: 1.25em;
+  font-weight: bold;
+  margin: 12px 0 6px 0;
+  color: #1f2937;
+}
+
+.editor-content :deep(ul),
+.editor-content :deep(ol) {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.editor-content :deep(li) {
+  margin: 4px 0;
+}
+
+.editor-content :deep(blockquote) {
+  border-left: 4px solid #3b82f6;
+  margin: 8px 0;
+  padding: 4px 16px;
+  color: #4b5563;
+  font-style: italic;
+}
+
 .format-toolbar {
   display: flex;
   align-items: center;
@@ -295,5 +460,24 @@ function unsetLink() {
 .toolbar-btn.active {
   background: #3b82f6;
   color: #fff;
+}
+
+.color-input {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-input::-webkit-color-swatch {
+  border: 1px solid #4b5563;
+  border-radius: 3px;
 }
 </style>
