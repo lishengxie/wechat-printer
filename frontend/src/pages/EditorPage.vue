@@ -1,28 +1,41 @@
 <script setup lang="ts">
-import { ref, computed, provide } from 'vue'
+import { ref, computed, provide, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDocumentStore } from '@/stores/document'
+import { createEmptyDocument } from '@/types/document'
 import ModuleLibrary from '@/components/ModuleLibrary.vue'
 import EditorCanvas from '@/components/EditorCanvas.vue'
 import PropertyPanel from '@/components/PropertyPanel.vue'
 import PreviewCanvas from '@/components/PreviewCanvas.vue'
 import api from '@/services/api'
 
+const route = useRoute()
+const router = useRouter()
 const documentStore = useDocumentStore()
 const { document, selectedModuleId } = storeToRefs(documentStore)
 
-// 预览模式 - 提供给子组件
+const isArticleMode = route.path.startsWith('/editor/article/')
+const entityId = isArticleMode ? (route.params.articleId as string) : (route.params.layoutId as string)
+
+provide('isArticleMode', isArticleMode)
+
+const articleMeta = ref({
+  title: '',
+  author: '',
+  summary: '',
+  cover_image: '',
+  status: 'draft' as 'draft' | 'published'
+})
+provide('articleMeta', articleMeta)
+
+// 预览模式
 const isPreviewMode = ref(false)
 provide('isPreviewMode', isPreviewMode)
 
 function togglePreview() {
   isPreviewMode.value = !isPreviewMode.value
 }
-console.log('Store initialized, document:', document.value)
-console.log('Root children:', document.value.root.children)
-
-// 当前排版 ID
-const currentLayoutId = ref<string | null>(null)
 
 // 导出 HTML 模态框状态
 const showExportModal = ref(false)
@@ -35,40 +48,70 @@ const saveMessage = ref('')
 const canUndo = computed(() => documentStore.canUndo())
 const canRedo = computed(() => documentStore.canRedo())
 
-// 撤销操作
 function handleUndo() {
   documentStore.undo()
 }
 
-// 重做操作
 function handleRedo() {
   documentStore.redo()
 }
 
-// 保存排版
+onMounted(async () => {
+  if (isArticleMode) {
+    try {
+      const article = await api.getArticle(entityId)
+      articleMeta.value = {
+        title: article.title,
+        author: article.author,
+        summary: article.summary,
+        cover_image: article.cover_image,
+        status: article.status
+      }
+      if (article.content) {
+        try {
+          const doc = JSON.parse(article.content)
+          documentStore.setDocument(doc)
+        } catch {
+          documentStore.setDocument(createEmptyDocument(article.title))
+        }
+      } else {
+        documentStore.setDocument(createEmptyDocument(article.title))
+      }
+    } catch (e: any) {
+      alert('加载文章失败: ' + e.message)
+      router.push('/dashboard/articles')
+    }
+  } else {
+    // template mode
+    try {
+      const layout = await api.getLayout(entityId)
+      documentStore.setDocument(layout.document)
+    } catch (e: any) {
+      alert('加载模板失败: ' + e.message)
+      router.push('/dashboard/templates')
+    }
+  }
+})
+
 async function handleSave() {
   isSaving.value = true
   saveMessage.value = ''
-
   try {
-    if (currentLayoutId.value) {
-      // 更新现有排版
-      await api.updateLayout(currentLayoutId.value, {
-        name: documentStore.document.title,
-        document: documentStore.document
+    if (isArticleMode) {
+      await api.updateArticle(entityId, {
+        title: articleMeta.value.title || documentStore.document.title,
+        author: articleMeta.value.author,
+        summary: articleMeta.value.summary,
+        cover_image: articleMeta.value.cover_image,
+        content: JSON.stringify(documentStore.document)
       })
-      saveMessage.value = '保存成功！'
     } else {
-      // 创建新排版
-      const layout = await api.createLayout({
+      await api.updateLayout(entityId, {
         name: documentStore.document.title,
         document: documentStore.document
       })
-      currentLayoutId.value = layout.id
-      saveMessage.value = '创建成功！'
     }
-
-    // 3秒后清除消息
+    saveMessage.value = '保存成功！'
     setTimeout(() => {
       saveMessage.value = ''
     }, 3000)
@@ -80,11 +123,9 @@ async function handleSave() {
   }
 }
 
-// 导出 HTML
 async function handleExportHTML() {
   isExporting.value = true
   showExportModal.value = true
-
   try {
     const result = await api.exportHTML(documentStore.document)
     exportedHTML.value = result.html
@@ -96,7 +137,6 @@ async function handleExportHTML() {
   }
 }
 
-// 复制 HTML 到剪贴板
 async function copyToClipboard() {
   try {
     await navigator.clipboard.writeText(exportedHTML.value)
@@ -106,10 +146,17 @@ async function copyToClipboard() {
   }
 }
 
-// 关闭模态框
 function closeExportModal() {
   showExportModal.value = false
   exportedHTML.value = ''
+}
+
+function goBack() {
+  if (isArticleMode) {
+    router.push('/dashboard/articles')
+  } else {
+    router.push('/dashboard/templates')
+  }
 }
 </script>
 
@@ -119,8 +166,16 @@ function closeExportModal() {
     <header class="toolbar">
       <div class="toolbar-left">
         <div class="logo">
+          <button class="back-btn" @click="goBack" title="返回">←</button>
           <span class="logo-icon">📰</span>
           <span class="logo-text">公众号排版编辑器</span>
+        </div>
+        <div v-if="isArticleMode" class="title-input-wrap">
+          <input
+            v-model="articleMeta.title"
+            class="title-input"
+            placeholder="文章标题"
+          />
         </div>
       </div>
 
@@ -173,7 +228,7 @@ function closeExportModal() {
         >
           <span v-if="isSaving" class="spinner">⏳</span>
           <span class="btn-icon">💾</span>
-          <span class="btn-text">{{ currentLayoutId ? '保存' : '创建' }}</span>
+          <span class="btn-text">保存</span>
         </button>
         <button
           class="primary-btn export-btn"
@@ -285,12 +340,31 @@ body {
 .toolbar-left {
   display: flex;
   align-items: center;
+  gap: 16px;
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.back-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #6b7280;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  background: #f3f4f6;
 }
 
 .logo-icon {
@@ -301,6 +375,28 @@ body {
   font-size: 16px;
   font-weight: 600;
   color: #111827;
+}
+
+.title-input-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.title-input {
+  padding: 6px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  outline: none;
+  min-width: 240px;
+}
+
+.title-input:focus {
+  border-color: #3b82f6;
+  background: #fff;
 }
 
 .toolbar-center {
