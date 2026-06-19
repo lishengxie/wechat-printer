@@ -3,7 +3,7 @@ import { useDragState } from '@/composables/useDragState'
 import { useDocumentStore } from '@/stores/document'
 import { createModule } from '@/types/document'
 import type { HeaderVariant, FooterVariant, TocVariant, HeadingVariant } from '@/types/document'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 interface ModuleItem {
   type: string
@@ -216,6 +216,15 @@ const groupedModules = computed(() => {
   return ordered
 })
 
+// 展开/收起状态
+const expandedGroups = ref<Record<string, boolean>>({
+  '基础组件': true  // 基础组件默认展开
+})
+
+function toggleGroup(name: string) {
+  expandedGroups.value[name] = !expandedGroups.value[name]
+}
+
 const handleDragStart = (event: DragEvent, module: ModuleItem) => {
   console.log('Drag started:', module.type, module.variant)
   if (event.dataTransfer) {
@@ -263,11 +272,15 @@ function handleClickAdd(module: ModuleItem) {
         :key="groupName"
         class="module-group"
       >
-        <div class="group-header">
-          <span class="group-title">{{ groupName }}</span>
+        <div class="group-header" @click="toggleGroup(groupName)">
+          <div class="group-header-left">
+            <span class="group-arrow" :class="{ expanded: expandedGroups[groupName] }">▶</span>
+            <span class="group-title">{{ groupName }}</span>
+          </div>
           <span class="group-count">{{ groupItems.length }}</span>
         </div>
-        <div class="group-items">
+        <Transition name="collapse">
+          <div v-if="expandedGroups[groupName]" class="group-items">
           <div
             v-for="module in groupItems"
             :key="`${module.type}-${module.variant || 'default'}`"
@@ -283,7 +296,8 @@ function handleClickAdd(module: ModuleItem) {
               <div class="module-description">{{ module.description }}</div>
             </div>
           </div>
-        </div>
+          </div>
+        </Transition>
       </div>
     </div>
   </div>
@@ -326,6 +340,29 @@ function handleClickAdd(module: ModuleItem) {
   justify-content: space-between;
   padding: 8px 4px;
   margin-bottom: 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.group-header:hover {
+  background: #f3f4f6;
+}
+
+.group-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.group-arrow {
+  font-size: 8px;
+  color: #9ca3af;
+  transition: transform 0.2s;
+}
+
+.group-arrow.expanded {
+  transform: rotate(90deg);
 }
 
 .group-title {
@@ -372,6 +409,23 @@ function handleClickAdd(module: ModuleItem) {
 
 .module-item:active {
   cursor: grabbing;
+}
+
+/* 折叠动画 */
+.collapse-enter-active,
+.collapse-leave-active {
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+.collapse-enter-from,
+.collapse-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+.collapse-enter-to,
+.collapse-leave-from {
+  opacity: 1;
+  max-height: 600px;
 }
 
 .module-icon {
