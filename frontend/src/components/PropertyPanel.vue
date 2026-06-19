@@ -486,6 +486,30 @@
         </div>
       </div>
 
+      <!-- Module Specific Props - Quote -->
+      <div v-if="selectedModule.type === 'quote'" class="space-y-4 pt-4 border-t border-gray-100">
+        <h4 class="text-xs font-medium text-gray-500 uppercase">引用设置</h4>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">引用内容</label>
+          <textarea
+            :value="(selectedModule.props as any).content"
+            @change="updateProps({ content: ($event.target as HTMLTextAreaElement).value })"
+            class="w-full px-3 py-2 border rounded text-sm min-h-[80px]"
+            placeholder="输入引用文字..."
+          ></textarea>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">作者/来源（可选）</label>
+          <input
+            type="text"
+            :value="(selectedModule.props as any).author || ''"
+            @change="updateProps({ author: ($event.target as HTMLInputElement).value })"
+            class="w-full px-3 py-2 border rounded text-sm"
+            placeholder="作者或来源"
+          />
+        </div>
+      </div>
+
       <!-- Module Specific Props - Heading -->
       <div v-if="selectedModule.type === 'heading'" class="space-y-4 pt-4 border-t border-gray-100">
         <h4 class="text-xs font-medium text-gray-500 uppercase">章节标题设置</h4>
@@ -624,7 +648,7 @@ const alignOptions = [
   { label: '右', value: 'right' as const }
 ]
 
-const textModules: ModuleType[] = ['text', 'button', 'header', 'footer', 'heading']
+const textModules: ModuleType[] = ['text', 'button', 'header', 'footer', 'heading', 'quote']
 const supportsTextColor = computed(() => selectedModule.value && textModules.includes(selectedModule.value.type))
 const supportsTextAlign = computed(() => selectedModule.value && textModules.includes(selectedModule.value.type))
 

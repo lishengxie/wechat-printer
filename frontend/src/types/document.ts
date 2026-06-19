@@ -1,15 +1,17 @@
-export type ModuleType = 'container' | 'text' | 'image' | 'divider' | 'button' | 'header' | 'footer' | 'toc' | 'heading'
+export type ModuleType = 'container' | 'text' | 'image' | 'divider' | 'button' | 'header' | 'footer' | 'toc' | 'heading' | 'quote'
 
 export interface ModuleStyles {
   margin?: string
   padding?: string
   backgroundColor?: string
   border?: string
+  borderLeft?: string
   borderRadius?: string
   textAlign?: 'left' | 'center' | 'right'
   fontSize?: string
   color?: string
   fontWeight?: string
+  fontStyle?: string
   lineHeight?: string
   fontFamily?: string
 }
@@ -91,6 +93,11 @@ export interface HeadingModuleProps {
   showNumbering: boolean
 }
 
+export interface QuoteModuleProps {
+  content: string
+  author?: string
+}
+
 export type ModuleSpecificProps =
   | ContainerModuleProps
   | TextModuleProps
@@ -101,6 +108,7 @@ export type ModuleSpecificProps =
   | FooterModuleProps
   | TocModuleProps
   | HeadingModuleProps
+  | QuoteModuleProps
 
 export interface Module {
   id: string
@@ -144,6 +152,7 @@ export function getDefaultStyles(): ModuleStyles {
     fontSize: '16px',
     color: '#333333',
     fontWeight: 'normal',
+    fontStyle: 'normal',
     lineHeight: '1.6'
   }
 }
@@ -158,6 +167,7 @@ export function createModule(type: 'header'): Module & { props: HeaderModuleProp
 export function createModule(type: 'footer'): Module & { props: FooterModuleProps }
 export function createModule(type: 'toc'): Module & { props: TocModuleProps }
 export function createModule(type: 'heading'): Module & { props: HeadingModuleProps }
+export function createModule(type: 'quote'): Module & { props: QuoteModuleProps }
 export function createModule(type: ModuleType): Module {
   const id = generateId()
 
@@ -280,6 +290,24 @@ export function createModule(type: ModuleType): Module {
           padding: '12px 0',
           margin: '24px 0 16px 0',
           lineHeight: '1.4'
+        }
+      }
+    case 'quote':
+      return {
+        id,
+        type: 'quote',
+        props: {
+          content: '这是一段引用文字',
+          author: ''
+        } as QuoteModuleProps,
+        styles: {
+          ...getDefaultStyles(),
+          padding: '16px 20px',
+          backgroundColor: '#f8fafc',
+          borderLeft: '4px solid #3b82f6',
+          borderRadius: '0 8px 8px 0',
+          fontStyle: 'italic',
+          margin: '0 0 16px 0'
         }
       }
     default:

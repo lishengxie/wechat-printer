@@ -150,6 +150,13 @@ const modules: ModuleItem[] = [
     icon: '📦',
     group: '基础组件'
   },
+  {
+    type: 'quote',
+    name: '引用',
+    description: '添加引用文字块，适合引述观点',
+    icon: '💬',
+    group: '基础组件'
+  },
   // 页尾预设
   {
     type: 'footer',

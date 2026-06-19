@@ -290,6 +290,15 @@ function generateHTMLFromDocument(document: Document): string {
         return renderFooter(module)
       case 'toc':
         return renderToc(module)
+      case 'quote': {
+        const iconHtml = module.props.icon
+          ? `<p style="margin: 0 0 4px 0; font-size: 20px; line-height: 1;">${module.props.icon}</p>`
+          : ''
+        const authorHtml = module.props.author
+          ? `<p style="margin: 8px 0 0 0; font-size: 13px; color: #9ca3af; text-align: right;">—— ${module.props.author}</p>`
+          : ''
+        return `<section style="${baseStyle}">${iconHtml}<p style="margin: 0; font-style: italic;">${module.props.content}</p>${authorHtml}</section>`
+      }
       default:
         return ''
     }
