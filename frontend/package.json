@@ -9,6 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/extension-bubble-menu": "^3.27.1",
+    "@tiptap/extension-link": "^3.27.1",
+    "@tiptap/starter-kit": "^3.27.1",
+    "@tiptap/vue-3": "^3.27.1",
     "pinia": "^2.1.0",
     "vue": "^3.4.0",
     "vue-draggable-plus": "^0.3.0",
