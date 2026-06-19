@@ -231,10 +231,15 @@ func CallLLM(systemPrompt, userPrompt string, dbCfg *model.AIConfig) (string, er
 }
 
 // GenerateModuleSuggestion sends module data + prompt to LLM and returns suggestion
-func GenerateModuleSuggestion(moduleJSON, prompt string, dbCfg *model.AIConfig) (explanation, updatedModule string, err error) {
+func GenerateModuleSuggestion(moduleJSON, prompt, mode string, dbCfg *model.AIConfig) (explanation, updatedModule string, err error) {
 	userPrompt := fmt.Sprintf("Current module:\n%s\n\nUser request: %s", moduleJSON, prompt)
 
-	content, err := CallLLM(systemPrompt, userPrompt, dbCfg)
+	selectedPrompt := systemPrompt
+	if mode == "style" {
+		selectedPrompt = styleModePrompt
+	}
+
+	content, err := CallLLM(selectedPrompt, userPrompt, dbCfg)
 	if err != nil {
 		return "", "", err
 	}
