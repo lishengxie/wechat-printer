@@ -19,6 +19,7 @@ interface ChatMessage {
   role: 'user' | 'assistant'
   text: string
   suggestedModule?: Module
+  mode?: string
 }
 
 const messages = ref<ChatMessage[]>([])
@@ -27,13 +28,31 @@ const loading = ref(false)
 const error = ref('')
 const messagesRef = ref<HTMLElement | null>(null)
 
-function moduleTypeLabel(type: string): string {
+const mode = ref<'style' | 'full'>('full')
+
+function moduleLabel(mod: Module | null): string {
+  if (!mod) return ''
   const labels: Record<string, string> = {
     header: '页首', footer: '页尾', text: '文本',
     image: '图片', button: '按钮', divider: '分割线',
-    container: '容器', toc: '目录'
+    container: '容器', toc: '目录', heading: '章节标题'
   }
-  return labels[type] || type
+  const base = labels[mod.type] || mod.type
+  const p = mod.props as any
+  if (mod.type === 'text' && p.content) {
+    const preview = p.content.replace(/<[^>]+>/g, '').trim().substring(0, 14)
+    return preview ? `${preview}` : base
+  }
+  if (mod.type === 'header' && p.title) return p.title.substring(0, 14)
+  if (mod.type === 'button' && p.text) return p.text
+  if (mod.type === 'footer' && p.text) return p.text.substring(0, 14)
+  if (mod.type === 'image' && p.src) {
+    const fn = p.src.split('/').pop() || ''
+    return fn.substring(0, 14) || base
+  }
+  if (mod.type === 'toc' && p.title) return p.title
+  if (mod.type === 'heading' && p.text) return p.text.substring(0, 14)
+  return base
 }
 
 // Reset messages when selected module changes
@@ -57,7 +76,8 @@ async function sendMessage() {
   try {
     const result = await apiAI.chat({
       prompt: text,
-      module: props.selectedModule
+      module: props.selectedModule,
+      mode: mode.value
     })
 
     let updatedModule: Module | undefined
@@ -70,7 +90,8 @@ async function sendMessage() {
     messages.value.push({
       role: 'assistant',
       text: result.explanation,
-      suggestedModule: updatedModule
+      suggestedModule: updatedModule,
+      mode: mode.value
     })
   } catch (e: any) {
     error.value = e.message || 'AI 请求失败，请重试'
@@ -89,12 +110,15 @@ function scrollToBottom() {
 
 function applyChanges(suggestedModule: Module) {
   if (!suggestedModule) return
-  if (suggestedModule.styles) {
-    documentStore.updateModuleStyles(suggestedModule.id, suggestedModule.styles)
+  const selected = props.selectedModule
+  if (!selected) return
+  // 样式模式下强制保持模块类型不变
+  const merged = {
+    ...suggestedModule,
+    id: selected.id,
+    ...(mode.value === 'style' ? { type: selected.type } : {})
   }
-  if (suggestedModule.props) {
-    documentStore.updateModuleProps(suggestedModule.id, suggestedModule.props as any)
-  }
+  documentStore.replaceModule(merged)
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -112,7 +136,7 @@ function handleKeydown(e: KeyboardEvent) {
       <div class="ai-toggle-left">
         <span class="ai-icon">🤖</span>
         <span class="ai-title">AI 排版助手</span>
-        <span v-if="selectedModule" class="ai-module-badge">{{ moduleTypeLabel(selectedModule.type) }}</span>
+        <span v-if="selectedModule" class="ai-module-badge">{{ moduleLabel(selectedModule) }}</span>
       </div>
       <div class="ai-toggle-right">
         <span class="ai-hint">{{ visible ? '点击收起' : '点击展开' }}</span>
@@ -123,6 +147,25 @@ function handleKeydown(e: KeyboardEvent) {
     <!-- Content -->
     <Transition name="panel-slide">
       <div v-if="visible" class="ai-body">
+        <!-- Mode Tabs -->
+        <div class="ai-mode-tabs">
+          <button
+            class="ai-mode-tab"
+            :class="{ active: mode === 'full' }"
+            @click="mode = 'full'"
+          >
+            <span class="tab-label">完整模式</span>
+            <span class="tab-desc">可修改任意内容</span>
+          </button>
+          <button
+            class="ai-mode-tab"
+            :class="{ active: mode === 'style' }"
+            @click="mode = 'style'"
+          >
+            <span class="tab-label">样式模式</span>
+            <span class="tab-desc">仅修改样式和内容</span>
+          </button>
+        </div>
         <!-- Messages -->
         <div class="ai-messages" ref="messagesRef">
           <div v-if="messages.length === 0 && !loading" class="ai-welcome">
@@ -133,6 +176,9 @@ function handleKeydown(e: KeyboardEvent) {
           <div v-for="(msg, idx) in messages" :key="idx" class="msg-row" :class="msg.role">
             <div class="msg-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
             <div class="msg-body">
+              <div v-if="msg.role === 'assistant' && msg.mode" class="msg-mode-label">
+                {{ msg.mode === 'style' ? '🎨 样式模式' : '🔧 完整模式' }}
+              </div>
               <div class="msg-text">{{ msg.text }}</div>
               <div v-if="msg.role === 'assistant' && msg.suggestedModule" class="msg-actions">
                 <button class="apply-btn" @click="applyChanges(msg.suggestedModule!)">✓ 应用修改</button>
@@ -347,6 +393,63 @@ function handleKeydown(e: KeyboardEvent) {
 @keyframes bounce {
   0%, 80%, 100% { opacity: 0; transform: translateY(0); }
   40% { opacity: 1; transform: translateY(-3px); }
+}
+
+.ai-mode-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px 0;
+  background: #fafafa;
+  flex-shrink: 0;
+}
+
+.ai-mode-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.ai-mode-tab:hover {
+  border-color: #c4b5fd;
+}
+
+.ai-mode-tab.active {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+}
+
+.tab-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.ai-mode-tab.active .tab-label {
+  color: #7c3aed;
+}
+
+.tab-desc {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.ai-mode-tab.active .tab-desc {
+  color: #a78bfa;
+}
+
+.msg-mode-label {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-bottom: 4px;
 }
 
 .ai-input-row {
