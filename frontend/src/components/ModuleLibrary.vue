@@ -1,226 +1,56 @@
 <script setup lang="ts">
-import { useDragState } from '@/composables/useDragState'
 import { useDocumentStore } from '@/stores/document'
 import { createModule } from '@/types/document'
-import type { HeaderVariant, FooterVariant, TocVariant, HeadingVariant } from '@/types/document'
+import { getModulesByGroup } from '@/registry/modules'
 import { computed, ref } from 'vue'
 
-interface ModuleItem {
-  type: string
+interface GroupedModules {
   name: string
-  description: string
-  icon: string
-  variant?: string
-  group?: string
+  items: Array<{
+    type: string
+    name: string
+    description: string
+    icon: string
+    variant?: string
+  }>
 }
-
-const modules: ModuleItem[] = [
-  // 页首预设
-  {
-    type: 'header',
-    name: '页首 · 经典',
-    description: '居中对齐的标题、副标题和元信息',
-    icon: '📰',
-    variant: 'default',
-    group: '页首'
-  },
-  {
-    type: 'header',
-    name: '页首 · 杂志',
-    description: '大字标题配红色装饰线，杂志封面感',
-    icon: '🗞️',
-    variant: 'magazine',
-    group: '页首'
-  },
-  {
-    type: 'header',
-    name: '页首 · 极简',
-    description: '左对齐无装饰，干净利落',
-    icon: '📄',
-    variant: 'minimal',
-    group: '页首'
-  },
-  {
-    type: 'header',
-    name: '页首 · 卡片',
-    description: '深色背景卡片，视觉冲击力强',
-    icon: '🎴',
-    variant: 'card',
-    group: '页首'
-  },
-  // 目录预设
-  {
-    type: 'toc',
-    name: '目录 · 经典',
-    description: '带圆点层级缩进的目录列表',
-    icon: '📑',
-    variant: 'default',
-    group: '目录'
-  },
-  {
-    type: 'toc',
-    name: '目录 · 编号',
-    description: '自动编号的有序目录列表',
-    icon: '🔢',
-    variant: 'numbered',
-    group: '目录'
-  },
-  {
-    type: 'toc',
-    name: '目录 · 卡片',
-    description: '卡片容器包裹，带序号高亮',
-    icon: '🃏',
-    variant: 'card',
-    group: '目录'
-  },
-  {
-    type: 'toc',
-    name: '目录 · 极简',
-    description: '细线分隔的极简目录',
-    icon: '📋',
-    variant: 'minimal',
-    group: '目录'
-  },
-  // 章节标题
-  {
-    type: 'heading',
-    name: '标题 · 编号风',
-    description: '左侧彩色竖条 + 编号前缀，章节感强',
-    icon: '📌',
-    variant: 'numbered',
-    group: '章节标题'
-  },
-  {
-    type: 'heading',
-    name: '标题 · 左侧竖条',
-    description: '彩色竖条装饰，无编号，简洁有力',
-    icon: '📍',
-    variant: 'left-bar',
-    group: '章节标题'
-  },
-  {
-    type: 'heading',
-    name: '标题 · 居中装饰',
-    description: '居中大标题配上下装饰线',
-    icon: '🎯',
-    variant: 'center',
-    group: '章节标题'
-  },
-  {
-    type: 'heading',
-    name: '标题 · 极简',
-    description: '仅加大加粗文字，干净利落',
-    icon: '🔤',
-    variant: 'simple',
-    group: '章节标题'
-  },
-  // 基础模块
-  {
-    type: 'text',
-    name: '文字',
-    description: '添加文本内容，支持富文本编辑',
-    icon: '📝',
-    group: '基础组件'
-  },
-  {
-    type: 'image',
-    name: '图片',
-    description: '上传并展示图片内容',
-    icon: '🖼️',
-    group: '基础组件'
-  },
-  {
-    type: 'divider',
-    name: '分割线',
-    description: '添加水平分割线分隔内容',
-    icon: '➖',
-    group: '基础组件'
-  },
-  {
-    type: 'button',
-    name: '按钮',
-    description: '添加可点击的按钮组件',
-    icon: '🔘',
-    group: '基础组件'
-  },
-  {
-    type: 'container',
-    name: '容器',
-    description: '添加容器用于包裹其他组件',
-    icon: '📦',
-    group: '基础组件'
-  },
-  {
-    type: 'quote',
-    name: '引用',
-    description: '添加引用文字块，适合引述观点',
-    icon: '💬',
-    group: '基础组件'
-  },
-  // 页尾预设
-  {
-    type: 'footer',
-    name: '页尾 · 经典',
-    description: '分割线加感谢语和版权信息',
-    icon: '🏁',
-    variant: 'default',
-    group: '页尾'
-  },
-  {
-    type: 'footer',
-    name: '页尾 · 简约',
-    description: '仅保留版权和简洁分隔线',
-    icon: '📍',
-    variant: 'simple',
-    group: '页尾'
-  },
-  {
-    type: 'footer',
-    name: '页尾 · 品牌',
-    description: 'Logo、社交点和品牌感设计',
-    icon: '🏢',
-    variant: 'branded',
-    group: '页尾'
-  },
-  {
-    type: 'footer',
-    name: '页尾 · 互动',
-    description: '引导点赞留言收藏的CTA设计',
-    icon: '👍',
-    variant: 'cta',
-    group: '页尾'
-  }
-]
 
 const emit = defineEmits<{
   (e: 'drag-module', moduleType: string): void
 }>()
 
-const { startDrag, endDrag } = useDragState()
 const documentStore = useDocumentStore()
 
-// 按组聚合模块
-const groupedModules = computed(() => {
-  const groups: Record<string, ModuleItem[]> = {}
-  for (const m of modules) {
-    const g = m.group || '其他'
-    if (!groups[g]) groups[g] = []
-    groups[g].push(m)
-  }
-  // 定义组的显示顺序
-  const order = ['页首', '目录', '章节标题', '基础组件', '页尾']
-  const ordered: [string, ModuleItem[]][] = []
-  for (const name of order) {
-    if (groups[name]) {
-      ordered.push([name, groups[name]])
-      delete groups[name]
+const groupedModules = computed<GroupedModules[]>(() => {
+  const groups = getModulesByGroup()
+  const result: GroupedModules[] = []
+
+  groups.forEach((items, name) => {
+    const resolved: GroupedModules['items'] = []
+    for (const reg of items) {
+      if (reg.variants && reg.variants.length > 0) {
+        for (const v of reg.variants) {
+          resolved.push({
+            type: reg.type,
+            name: v.name,
+            description: v.description,
+            icon: v.icon,
+            variant: v.variant
+          })
+        }
+      } else {
+        resolved.push({
+          type: reg.type,
+          name: reg.name,
+          description: reg.description,
+          icon: reg.icon
+        })
+      }
     }
-  }
-  // 追加未定义的组
-  for (const [name, items] of Object.entries(groups)) {
-    ordered.push([name, items])
-  }
-  return ordered
+    result.push({ name, items: resolved })
+  })
+
+  return result
 })
 
 // 展开/收起状态
@@ -232,7 +62,7 @@ function toggleGroup(name: string) {
   expandedGroups.value[name] = !expandedGroups.value[name]
 }
 
-const handleDragStart = (event: DragEvent, module: ModuleItem) => {
+const handleDragStart = (event: DragEvent, module: GroupedModules['items'][number]) => {
   console.log('Drag started:', module.type, module.variant)
   if (event.dataTransfer) {
     event.dataTransfer.setData('moduleType', module.type)
@@ -241,29 +71,14 @@ const handleDragStart = (event: DragEvent, module: ModuleItem) => {
     }
     event.dataTransfer.effectAllowed = 'copy'
   }
-  startDrag(module.type as any)
   emit('drag-module', module.type)
 }
 
-const handleDragEnd = () => {
-  setTimeout(() => {
-    endDrag()
-  }, 100)
-}
-
-function handleClickAdd(module: ModuleItem) {
+function handleClickAdd(module: GroupedModules['items'][number]) {
   console.log('Click add module:', module.type, module.variant)
   const newModule = createModule(module.type as any)
   if (module.variant) {
-    if (module.type === 'header') {
-      (newModule.props as any).variant = module.variant as HeaderVariant
-    } else if (module.type === 'footer') {
-      (newModule.props as any).variant = module.variant as FooterVariant
-    } else if (module.type === 'toc') {
-      (newModule.props as any).variant = module.variant as TocVariant
-    } else if (module.type === 'heading') {
-      (newModule.props as any).variant = module.variant as HeadingVariant
-    }
+    (newModule.props as any).variant = module.variant
   }
   documentStore.addModule(newModule)
 }
@@ -275,26 +90,25 @@ function handleClickAdd(module: ModuleItem) {
     <p class="library-hint">💡 拖拽或点击添加模块</p>
     <div class="modules-list">
       <div
-        v-for="[groupName, groupItems] in groupedModules"
-        :key="groupName"
+        v-for="group in groupedModules"
+        :key="group.name"
         class="module-group"
       >
-        <div class="group-header" @click="toggleGroup(groupName)">
+        <div class="group-header" @click="toggleGroup(group.name)">
           <div class="group-header-left">
-            <span class="group-arrow" :class="{ expanded: expandedGroups[groupName] }">▶</span>
-            <span class="group-title">{{ groupName }}</span>
+            <span class="group-arrow" :class="{ expanded: expandedGroups[group.name] }">▶</span>
+            <span class="group-title">{{ group.name }}</span>
           </div>
-          <span class="group-count">{{ groupItems.length }}</span>
+          <span class="group-count">{{ group.items.length }}</span>
         </div>
         <Transition name="collapse">
-          <div v-if="expandedGroups[groupName]" class="group-items">
+          <div v-if="expandedGroups[group.name]" class="group-items">
           <div
-            v-for="module in groupItems"
+            v-for="module in group.items"
             :key="`${module.type}-${module.variant || 'default'}`"
             class="module-item"
             draggable="true"
             @dragstart="handleDragStart($event, module)"
-            @dragend="handleDragEnd"
             @click="handleClickAdd(module)"
           >
             <div class="module-icon">{{ module.icon }}</div>
