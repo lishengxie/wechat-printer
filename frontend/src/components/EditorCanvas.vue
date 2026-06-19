@@ -18,7 +18,7 @@ const moduleList = ref<Module[]>([])
 
 watch(() => document.value.root.children, (newChildren) => {
   if (newChildren) {
-    moduleList.value = newChildren
+    moduleList.value = [...newChildren]
   } else {
     moduleList.value = []
   }
@@ -64,10 +64,7 @@ function onCanvasDrop(event: DragEvent) {
 // VueDraggable 排序变更处理
 function onDragChange() {
   const orderedIds = moduleList.value.map(m => m.id)
-  const currentIds = (document.value.root.children || []).map(m => m.id)
-  if (orderedIds.join(',') !== currentIds.join(',')) {
-    documentStore.reorderRootChildren(orderedIds)
-  }
+  documentStore.reorderRootChildren(orderedIds)
 }
 </script>
 
