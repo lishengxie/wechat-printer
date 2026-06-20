@@ -16,6 +16,13 @@ const newTitle = ref('')
 const newLayoutId = ref('')
 const creating = ref(false)
 
+const EXAMPLE_ARTICLES = [
+  { id: 'product-review', name: '产品评测文' },
+  { id: 'blank', name: '空白文章' }
+] as const
+
+const selectedExample = ref('blank')
+
 async function loadData() {
   loading.value = true
   error.value = ''
@@ -56,19 +63,26 @@ async function createArticleFromModal() {
   if (creating.value) return
   creating.value = true
   try {
-    let content = ''
-    if (newLayoutId.value) {
-      const layout = await api.getLayout(newLayoutId.value)
-      content = JSON.stringify(layout.document)
-    }
     const article = await api.createArticle({
       title: newTitle.value.trim(),
-      content
+      content: '',
+      layout_id: newLayoutId.value || undefined
     })
     showCreateModal.value = false
+
+    const params = new URLSearchParams()
+    if (selectedExample.value && selectedExample.value !== 'blank') {
+      params.set('example', selectedExample.value)
+    }
+    if (newLayoutId.value) {
+      params.set('template', newLayoutId.value)
+    }
+    const qs = params.toString()
+
     newTitle.value = ''
     newLayoutId.value = ''
-    router.push(`/editor/article/${article.id}`)
+    selectedExample.value = 'blank'
+    router.push(`/editor/article/${article.id}${qs ? '?' + qs : ''}`)
   } catch (e: any) {
     ElMessage.error('创建失败: ' + e.message)
   } finally {
@@ -80,6 +94,7 @@ function closeModal() {
   showCreateModal.value = false
   newTitle.value = ''
   newLayoutId.value = ''
+  selectedExample.value = 'blank'
 }
 
 onMounted(loadData)
@@ -149,9 +164,23 @@ onMounted(loadData)
             @keyup.enter="createArticleFromModal"
           />
         </el-form-item>
-        <el-form-item label="基于模板（可选）">
+        <el-form-item label="示例文章">
+          <div class="example-tags">
+            <el-tag
+              v-for="ex in EXAMPLE_ARTICLES"
+              :key="ex.id"
+              :type="selectedExample === ex.id ? 'primary' : 'info'"
+              :effect="selectedExample === ex.id ? 'dark' : 'plain'"
+              style="cursor: pointer; margin-right: 8px; margin-bottom: 4px;"
+              @click="selectedExample = ex.id"
+            >
+              {{ ex.name }}
+            </el-tag>
+          </div>
+        </el-form-item>
+        <el-form-item label="应用模板（可选）">
           <el-select v-model="newLayoutId" placeholder="选择模板" clearable style="width: 100%">
-            <el-option label="空白文章" value="" />
+            <el-option label="不选" value="" />
             <el-option
               v-for="layout in layouts"
               :key="layout.id"
