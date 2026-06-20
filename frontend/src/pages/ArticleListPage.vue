@@ -36,11 +36,15 @@ function editArticleContent(id: string) {
 async function deleteArticle(id: string) {
   try {
     await ElMessageBox.confirm('确定要删除这篇文章吗？', '确认删除')
+  } catch {
+    return // user cancelled
+  }
+  try {
     await api.deleteArticle(id)
     ElMessage.success('删除成功')
     await loadData()
-  } catch {
-    // cancelled
+  } catch (e: any) {
+    ElMessage.error('删除失败: ' + (e.message || ''))
   }
 }
 
@@ -49,6 +53,7 @@ async function createArticleFromModal() {
     ElMessage.warning('请填写文章标题')
     return
   }
+  if (creating.value) return
   creating.value = true
   try {
     let content = ''
