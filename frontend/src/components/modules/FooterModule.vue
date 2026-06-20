@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { inject, ref, computed } from 'vue'
+import RichTextEditor from '@/components/RichTextEditor.vue'
+import { useDocumentStore } from '@/stores/document'
 import type { Module, FooterModuleProps } from '@/types/document'
 
 interface Props {
@@ -7,6 +9,9 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const documentStore = useDocumentStore()
+const isPreviewMode = inject('isPreviewMode', ref(false))
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '16px',
@@ -17,88 +22,69 @@ const containerStyle = computed(() => ({
   textAlign: (props.module.styles.textAlign || 'center') as any,
   fontFamily: props.module.styles.fontFamily || undefined
 }))
+
+function onTextUpdate(content: string) {
+  documentStore.updateModuleProps(props.module.id, { text: content })
+}
+
+function onCopyrightUpdate(content: string) {
+  documentStore.updateModuleProps(props.module.id, { copyright: content })
+}
 </script>
 
 <template>
   <div class="footer-module" :class="`variant-${module.props.variant}`" :style="containerStyle">
     <!-- 默认风格 -->
     <template v-if="module.props.variant === 'default'">
-      <hr
-        v-if="module.props.showDivider"
-        class="footer-divider"
-        :style="{
-          border: 'none',
-          borderTop: '1px solid #e5e7eb',
-          margin: '0 0 16px 0'
-        }"
-      />
-      <p
-        v-if="module.props.text"
-        class="footer-text"
-        :style="{
-          textAlign: module.styles.textAlign || 'center',
-          fontSize: module.styles.fontSize || '13px',
-          color: module.styles.color || '#6b7280',
-          margin: '0 0 8px 0',
-          lineHeight: '1.6'
-        }"
-      >
-        {{ module.props.text }}
-      </p>
-      <p
-        v-if="module.props.copyright"
-        class="footer-copyright"
-        :style="{
-          textAlign: module.styles.textAlign || 'center',
-          fontSize: '12px',
-          color: '#9ca3af',
-          margin: 0
-        }"
-      >
-        {{ module.props.copyright }}
-      </p>
+      <hr v-if="module.props.showDivider" class="footer-divider" :style="{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '0 0 16px 0' }" />
+      <div v-if="module.props.text" class="footer-text" :style="{ fontSize: module.styles.fontSize || '13px', color: module.styles.color || '#6b7280', margin: '0 0 8px 0', lineHeight: '1.6' }">
+        <RichTextEditor
+          :content="module.props.text"
+          :editable="!isPreviewMode"
+          @update:content="onTextUpdate"
+        />
+      </div>
+      <div v-if="module.props.copyright" :style="{ fontSize: '12px', color: '#9ca3af', margin: 0 }">
+        <RichTextEditor
+          :content="module.props.copyright"
+          :editable="!isPreviewMode"
+          @update:content="onCopyrightUpdate"
+        />
+      </div>
     </template>
 
     <!-- 简约风 -->
     <template v-if="module.props.variant === 'simple'">
-      <div
-        class="simple-inner"
-        :style="{
-          textAlign: module.styles.textAlign || 'center'
-        }"
-      >
+      <div class="simple-inner" :style="{ textAlign: module.styles.textAlign || 'center' }">
         <div class="simple-line"></div>
-        <p
-          v-if="module.props.copyright"
-          class="simple-copyright"
-        >
-          {{ module.props.copyright }}
-        </p>
+        <div v-if="module.props.copyright" class="simple-copyright">
+          <RichTextEditor
+            :content="module.props.copyright"
+            :editable="!isPreviewMode"
+            @update:content="onCopyrightUpdate"
+          />
+        </div>
       </div>
     </template>
 
     <!-- 品牌风 -->
     <template v-if="module.props.variant === 'branded'">
-      <div
-        class="branded-inner"
-        :style="{
-          backgroundColor: module.styles.backgroundColor || '#f8fafc',
-          textAlign: module.styles.textAlign || 'center'
-        }"
-      >
+      <div class="branded-inner" :style="{ backgroundColor: module.styles.backgroundColor || '#f8fafc', textAlign: module.styles.textAlign || 'center' }">
         <div class="branded-logo">📰</div>
-        <p
-          v-if="module.props.text"
-          class="branded-text"
-        >
-          {{ module.props.text }}
-        </p>
-        <p
-          v-if="module.props.copyright"
-          class="branded-copyright"
-        >
-          {{ module.props.copyright }}
-        </p>
+        <div v-if="module.props.text" class="branded-text">
+          <RichTextEditor
+            :content="module.props.text"
+            :editable="!isPreviewMode"
+            @update:content="onTextUpdate"
+          />
+        </div>
+        <div v-if="module.props.copyright" class="branded-copyright">
+          <RichTextEditor
+            :content="module.props.copyright"
+            :editable="!isPreviewMode"
+            @update:content="onCopyrightUpdate"
+          />
+        </div>
         <div class="branded-social">
           <span class="social-dot"></span>
           <span class="social-dot"></span>
@@ -109,31 +95,22 @@ const containerStyle = computed(() => ({
 
     <!-- CTA风 -->
     <template v-if="module.props.variant === 'cta'">
-      <div
-        class="cta-inner"
-        :style="{
-          backgroundColor: module.styles.backgroundColor || '#fef2f2',
-          textAlign: module.styles.textAlign || 'center'
-        }"
-      >
-        <p
-          v-if="module.props.text"
-          class="cta-text"
-          :style="{
-            color: module.styles.color || '#991b1b'
-          }"
-        >
-          {{ module.props.text }}
-        </p>
-        <button class="cta-btn">
-          👍 点赞 · 💬 留言 · ⭐ 收藏
-        </button>
-        <p
-          v-if="module.props.copyright"
-          class="cta-copyright"
-        >
-          {{ module.props.copyright }}
-        </p>
+      <div class="cta-inner" :style="{ backgroundColor: module.styles.backgroundColor || '#fef2f2', textAlign: module.styles.textAlign || 'center' }">
+        <div v-if="module.props.text" class="cta-text" :style="{ color: module.styles.color || '#991b1b' }">
+          <RichTextEditor
+            :content="module.props.text"
+            :editable="!isPreviewMode"
+            @update:content="onTextUpdate"
+          />
+        </div>
+        <button class="cta-btn">👍 点赞 · 💬 留言 · ⭐ 收藏</button>
+        <div v-if="module.props.copyright" class="cta-copyright">
+          <RichTextEditor
+            :content="module.props.copyright"
+            :editable="!isPreviewMode"
+            @update:content="onCopyrightUpdate"
+          />
+        </div>
       </div>
     </template>
   </div>
@@ -144,7 +121,6 @@ const containerStyle = computed(() => ({
   position: relative;
 }
 
-/* 默认 */
 .footer-text {
   word-break: break-word;
 }
@@ -153,6 +129,7 @@ const containerStyle = computed(() => ({
 .simple-inner {
   padding: 8px 0;
 }
+
 .simple-line {
   width: 40px;
   height: 2px;
@@ -160,6 +137,7 @@ const containerStyle = computed(() => ({
   border-radius: 1px;
   margin: 0 auto 12px auto;
 }
+
 .simple-copyright {
   font-size: 12px;
   color: #9ca3af;
@@ -171,26 +149,31 @@ const containerStyle = computed(() => ({
   padding: 24px;
   border-radius: 12px;
 }
+
 .branded-logo {
   font-size: 28px;
   margin-bottom: 12px;
 }
+
 .branded-text {
   font-size: 14px;
   color: #4b5563;
   margin: 0 0 8px 0;
   line-height: 1.6;
 }
+
 .branded-copyright {
   font-size: 12px;
   color: #9ca3af;
   margin: 0 0 16px 0;
 }
+
 .branded-social {
   display: flex;
   justify-content: center;
   gap: 8px;
 }
+
 .social-dot {
   width: 8px;
   height: 8px;
@@ -204,12 +187,14 @@ const containerStyle = computed(() => ({
   border-radius: 12px;
   border: 1px dashed #fecaca;
 }
+
 .cta-text {
   font-size: 15px;
   font-weight: 500;
   margin: 0 0 16px 0;
   line-height: 1.6;
 }
+
 .cta-btn {
   display: inline-block;
   padding: 10px 24px;
@@ -221,6 +206,7 @@ const containerStyle = computed(() => ({
   cursor: default;
   margin-bottom: 16px;
 }
+
 .cta-copyright {
   font-size: 12px;
   color: #9ca3af;

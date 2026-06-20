@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { inject, ref, computed } from 'vue'
+import RichTextEditor from '@/components/RichTextEditor.vue'
+import { useDocumentStore } from '@/stores/document'
 import type { Module, ButtonModuleProps } from '@/types/document'
 
 interface Props {
@@ -7,6 +9,9 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const documentStore = useDocumentStore()
+const isPreviewMode = inject('isPreviewMode', ref(false))
 
 const containerStyle = computed(() => ({
   textAlign: (props.module.styles.textAlign || 'center') as any,
@@ -22,6 +27,17 @@ const sizeClasses = {
   medium: 'px-6 py-2',
   large: 'px-8 py-3 text-lg'
 }
+
+const linkStyle = computed(() => ({
+  backgroundColor: props.module.styles.backgroundColor || '#3b82f6',
+  color: props.module.styles.color || '#ffffff',
+  borderRadius: props.module.styles.borderRadius || '6px',
+  fontSize: props.module.styles.fontSize || undefined
+}))
+
+function onTextUpdate(content: string) {
+  documentStore.updateModuleProps(props.module.id, { text: content })
+}
 </script>
 
 <template>
@@ -30,14 +46,13 @@ const sizeClasses = {
       :href="module.props.link"
       class="inline-block rounded text-center no-underline transition-opacity hover:opacity-90"
       :class="sizeClasses[module.props.size]"
-      :style="{
-        backgroundColor: module.styles.backgroundColor || '#3b82f6',
-        color: module.styles.color || '#ffffff',
-        borderRadius: module.styles.borderRadius || '6px',
-        fontSize: module.styles.fontSize
-      }"
+      :style="linkStyle"
     >
-      {{ module.props.text }}
+      <RichTextEditor
+        :content="module.props.text"
+        :editable="!isPreviewMode"
+        @update:content="onTextUpdate"
+      />
     </a>
   </div>
 </template>

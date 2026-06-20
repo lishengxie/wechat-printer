@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { inject, ref, computed } from 'vue'
+import RichTextEditor from '@/components/RichTextEditor.vue'
+import { useDocumentStore } from '@/stores/document'
 import type { Module, HeaderModuleProps } from '@/types/document'
 
 interface Props {
@@ -7,6 +9,9 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const documentStore = useDocumentStore()
+const isPreviewMode = inject('isPreviewMode', ref(false))
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '24px 16px',
@@ -17,118 +22,87 @@ const containerStyle = computed(() => ({
   textAlign: (props.module.styles.textAlign || 'center') as any,
   fontFamily: props.module.styles.fontFamily || undefined
 }))
+
+const titleStyle = computed(() => ({
+  fontSize: props.module.styles.fontSize || '24px',
+  color: props.module.styles.color || '#1f2937',
+  fontWeight: props.module.styles.fontWeight || 'bold',
+  lineHeight: props.module.styles.lineHeight || '1.4'
+}))
+
+const subtitleStyle = computed(() => ({
+  fontSize: '15px',
+  color: '#6b7280',
+  lineHeight: '1.6'
+}))
+
+function onTitleUpdate(content: string) {
+  documentStore.updateModuleProps(props.module.id, { title: content })
+}
+
+function onSubtitleUpdate(content: string) {
+  documentStore.updateModuleProps(props.module.id, { subtitle: content })
+}
 </script>
 
 <template>
   <div class="header-module" :class="`variant-${module.props.variant}`" :style="containerStyle">
     <!-- 默认风格 -->
     <template v-if="module.props.variant === 'default'">
-      <h1
-        class="header-title"
-        :style="{
-          fontSize: module.styles.fontSize || '24px',
-          color: module.styles.color || '#1f2937',
-          fontWeight: module.styles.fontWeight || 'bold',
-          textAlign: module.styles.textAlign || 'center',
-          margin: '0 0 8px 0',
-          lineHeight: module.styles.lineHeight || '1.4'
-        }"
-      >
-        {{ module.props.title }}
-      </h1>
-      <p
-        v-if="module.props.subtitle"
-        class="header-subtitle"
-        :style="{
-          fontSize: '15px',
-          color: '#6b7280',
-          textAlign: module.styles.textAlign || 'center',
-          margin: '0 0 16px 0',
-          lineHeight: '1.6'
-        }"
-      >
-        {{ module.props.subtitle }}
-      </p>
-      <div
-        class="header-meta"
-        :style="{
-          textAlign: module.styles.textAlign || 'center',
-          fontSize: '13px',
-          color: '#9ca3af'
-        }"
-      >
-        <span v-if="module.props.showAuthor && module.props.author" class="meta-item">
-          {{ module.props.author }}
-        </span>
-        <span v-if="module.props.showDate && module.props.date" class="meta-item">
-          {{ module.props.date }}
-        </span>
+      <RichTextEditor
+        :content="module.props.title"
+        :editable="!isPreviewMode"
+        @update:content="onTitleUpdate"
+        class="header-title-editor"
+        :style="titleStyle"
+      />
+      <div v-if="module.props.subtitle" class="header-subtitle" :style="subtitleStyle">
+        <RichTextEditor
+          :content="module.props.subtitle"
+          :editable="!isPreviewMode"
+          @update:content="onSubtitleUpdate"
+        />
+      </div>
+      <div class="header-meta" :style="{ textAlign: (module.styles.textAlign || 'center') as any, fontSize: '13px', color: '#9ca3af' }">
+        <span v-if="module.props.showAuthor && module.props.author" class="meta-item">{{ module.props.author }}</span>
+        <span v-if="module.props.showDate && module.props.date" class="meta-item">{{ module.props.date }}</span>
       </div>
     </template>
 
     <!-- 杂志封面风 -->
     <template v-if="module.props.variant === 'magazine'">
       <div class="magazine-accent"></div>
-      <p
-        v-if="module.props.subtitle"
-        class="magazine-subtitle"
-        :style="{
-          textAlign: module.styles.textAlign || 'center',
-          color: module.styles.color || '#dc2626'
-        }"
-      >
-        {{ module.props.subtitle }}
-      </p>
-      <h1
-        class="magazine-title"
-        :style="{
-          color: module.styles.color || '#1f2937',
-          textAlign: module.styles.textAlign || 'center'
-        }"
-      >
-        {{ module.props.title }}
-      </h1>
-      <div
-        class="magazine-line"
-        :style="{
-          margin: module.styles.textAlign === 'left' ? '16px 0 12px 0' : '16px auto 12px auto'
-        }"
-      ></div>
-      <div
-        class="magazine-meta"
-        :style="{
-          textAlign: module.styles.textAlign || 'center'
-        }"
-      >
-        <span v-if="module.props.showAuthor && module.props.author">
-          {{ module.props.author }}
-        </span>
-        <span v-if="module.props.showDate && module.props.date">
-          {{ module.props.date }}
-        </span>
+      <div v-if="module.props.subtitle" class="magazine-subtitle" :style="{ textAlign: module.styles.textAlign || 'center', color: module.styles.color || '#dc2626' }">
+        <RichTextEditor
+          :content="module.props.subtitle"
+          :editable="!isPreviewMode"
+          @update:content="onSubtitleUpdate"
+        />
+      </div>
+      <div class="magazine-title" :style="{ color: module.styles.color || '#1f2937', textAlign: module.styles.textAlign || 'center' }">
+        <RichTextEditor
+          :content="module.props.title"
+          :editable="!isPreviewMode"
+          @update:content="onTitleUpdate"
+        />
+      </div>
+      <div class="magazine-line" :style="{ margin: (module.styles.textAlign === 'left' ? '16px 0 12px 0' : '16px auto 12px auto') }"></div>
+      <div class="magazine-meta" :style="{ textAlign: module.styles.textAlign || 'center' }">
+        <span v-if="module.props.showAuthor && module.props.author">{{ module.props.author }}</span>
+        <span v-if="module.props.showDate && module.props.date">{{ module.props.date }}</span>
       </div>
     </template>
 
     <!-- 极简风 -->
     <template v-if="module.props.variant === 'minimal'">
-      <h1
-        class="minimal-title"
-        :style="{
-          color: module.styles.color || '#111827',
-          textAlign: module.styles.textAlign || 'left',
-          fontSize: module.styles.fontSize || '26px',
-          fontWeight: module.styles.fontWeight || '700',
-          lineHeight: module.styles.lineHeight || '1.35'
-        }"
-      >
-        {{ module.props.title }}
-      </h1>
-      <div
-        class="minimal-meta"
-        :style="{
-          textAlign: module.styles.textAlign || 'left'
-        }"
-      >
+      <div :style="{ color: module.styles.color || '#111827', textAlign: module.styles.textAlign || 'left', fontSize: module.styles.fontSize || '26px', fontWeight: module.styles.fontWeight || '700', lineHeight: module.styles.lineHeight || '1.35' }">
+        <RichTextEditor
+          :content="module.props.title"
+          :editable="!isPreviewMode"
+          @update:content="onTitleUpdate"
+        />
+      </div>
+      <div class="minimal-meta" :style="{ textAlign: module.styles.textAlign || 'left' }">
         <span v-if="module.props.showDate && module.props.date">{{ module.props.date }}</span>
         <span v-if="module.props.showAuthor && module.props.author">{{ module.props.author }}</span>
       </div>
@@ -136,36 +110,24 @@ const containerStyle = computed(() => ({
 
     <!-- 卡片风 -->
     <template v-if="module.props.variant === 'card'">
-      <div
-        class="card-inner"
-        :style="{
-          backgroundColor: module.styles.backgroundColor || '#1f2937',
-          textAlign: module.styles.textAlign || 'center',
-          borderRadius: module.styles.borderRadius || '12px',
-          border: module.styles.border || 'none'
-        }"
-      >
-        <h1
-          class="card-title"
-          :style="{
-            color: module.styles.color || '#ffffff'
-          }"
-        >
-          {{ module.props.title }}
-        </h1>
-        <p
-          v-if="module.props.subtitle"
-          class="card-subtitle"
-        >
-          {{ module.props.subtitle }}
+      <div class="card-inner" :style="{ backgroundColor: module.styles.backgroundColor || '#1f2937', textAlign: module.styles.textAlign || 'center', borderRadius: module.styles.borderRadius || '12px', border: module.styles.border || 'none' }">
+        <div :style="{ color: module.styles.color || '#ffffff' }">
+          <RichTextEditor
+            :content="module.props.title"
+            :editable="!isPreviewMode"
+            @update:content="onTitleUpdate"
+          />
+        </div>
+        <p v-if="module.props.subtitle" class="card-subtitle">
+          <RichTextEditor
+            :content="module.props.subtitle"
+            :editable="!isPreviewMode"
+            @update:content="onSubtitleUpdate"
+          />
         </p>
         <div class="card-meta">
-          <span v-if="module.props.showAuthor && module.props.author">
-            {{ module.props.author }}
-          </span>
-          <span v-if="module.props.showDate && module.props.date">
-            {{ module.props.date }}
-          </span>
+          <span v-if="module.props.showAuthor && module.props.author">{{ module.props.author }}</span>
+          <span v-if="module.props.showDate && module.props.date">{{ module.props.date }}</span>
         </div>
       </div>
     </template>
@@ -177,23 +139,26 @@ const containerStyle = computed(() => ({
   position: relative;
 }
 
-/* 默认 */
-.header-title {
-  word-break: break-word;
+.header-title-editor {
+  margin: 0 0 8px 0;
 }
+
 .header-subtitle {
-  word-break: break-word;
+  margin: 0 0 16px 0;
 }
+
 .header-meta {
   display: flex;
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
 }
+
 .meta-item {
   display: inline-flex;
   align-items: center;
 }
+
 .meta-item:not(:last-child)::after {
   content: '';
   display: inline-block;
@@ -212,6 +177,7 @@ const containerStyle = computed(() => ({
   border-radius: 2px;
   margin: 0 auto 16px auto;
 }
+
 .variant-magazine .magazine-subtitle {
   font-size: 13px;
   font-weight: 500;
@@ -219,6 +185,7 @@ const containerStyle = computed(() => ({
   text-transform: uppercase;
   margin: 0 0 8px 0;
 }
+
 .variant-magazine .magazine-title {
   font-size: 28px;
   font-weight: 800;
@@ -226,12 +193,14 @@ const containerStyle = computed(() => ({
   margin: 0;
   letter-spacing: -0.5px;
 }
+
 .magazine-line {
   width: 60px;
   height: 3px;
   background: #e5e7eb;
   border-radius: 2px;
 }
+
 .magazine-meta {
   font-size: 13px;
   color: #9ca3af;
@@ -241,10 +210,6 @@ const containerStyle = computed(() => ({
 }
 
 /* 极简风 */
-.minimal-title {
-  margin: 0 0 12px 0;
-  letter-spacing: -0.3px;
-}
 .minimal-meta {
   font-size: 13px;
   color: #9ca3af;
@@ -256,18 +221,14 @@ const containerStyle = computed(() => ({
 .card-inner {
   padding: 32px 24px;
 }
-.card-title {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.4;
-  margin: 0 0 8px 0;
-}
+
 .card-subtitle {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.75);
   margin: 0 0 16px 0;
   line-height: 1.5;
 }
+
 .card-meta {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.55);

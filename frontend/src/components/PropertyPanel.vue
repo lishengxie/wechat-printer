@@ -113,22 +113,22 @@
           <div class="space-y-1.5">
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-400 w-5">上</span>
-              <input type="range" min="0" max="80" :value="paddingTop" @input="updatePadding('top', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
+              <input type="range" min="0" max="80" :value="paddingTop" @change="updatePadding('top', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
               <span class="text-xs text-gray-500 w-10 text-right">{{ paddingTop }}px</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-400 w-5">右</span>
-              <input type="range" min="0" max="80" :value="paddingRight" @input="updatePadding('right', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
+              <input type="range" min="0" max="80" :value="paddingRight" @change="updatePadding('right', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
               <span class="text-xs text-gray-500 w-10 text-right">{{ paddingRight }}px</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-400 w-5">下</span>
-              <input type="range" min="0" max="80" :value="paddingBottom" @input="updatePadding('bottom', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
+              <input type="range" min="0" max="80" :value="paddingBottom" @change="updatePadding('bottom', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
               <span class="text-xs text-gray-500 w-10 text-right">{{ paddingBottom }}px</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-400 w-5">左</span>
-              <input type="range" min="0" max="80" :value="paddingLeft" @input="updatePadding('left', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
+              <input type="range" min="0" max="80" :value="paddingLeft" @change="updatePadding('left', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
               <span class="text-xs text-gray-500 w-10 text-right">{{ paddingLeft }}px</span>
             </div>
           </div>
@@ -140,22 +140,22 @@
           <div class="space-y-1.5">
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-400 w-5">上</span>
-              <input type="range" min="0" max="80" :value="marginTop" @input="updateMargin('top', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
+              <input type="range" min="0" max="80" :value="marginTop" @change="updateMargin('top', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
               <span class="text-xs text-gray-500 w-10 text-right">{{ marginTop }}px</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-400 w-5">右</span>
-              <input type="range" min="0" max="80" :value="marginRight" @input="updateMargin('right', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
+              <input type="range" min="0" max="80" :value="marginRight" @change="updateMargin('right', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
               <span class="text-xs text-gray-500 w-10 text-right">{{ marginRight }}px</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-400 w-5">下</span>
-              <input type="range" min="0" max="80" :value="marginBottom" @input="updateMargin('bottom', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
+              <input type="range" min="0" max="80" :value="marginBottom" @change="updateMargin('bottom', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
               <span class="text-xs text-gray-500 w-10 text-right">{{ marginBottom }}px</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-xs text-gray-400 w-5">左</span>
-              <input type="range" min="0" max="80" :value="marginLeft" @input="updateMargin('left', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
+              <input type="range" min="0" max="80" :value="marginLeft" @change="updateMargin('left', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
               <span class="text-xs text-gray-500 w-10 text-right">{{ marginLeft }}px</span>
             </div>
           </div>

@@ -24,6 +24,15 @@ func main() {
 	articleHandler := handler.NewArticleHandler(db)
 	aiHandler := handler.NewAIHandler(db)
 
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = "uploads"
+	}
+	uploadHandler, err := handler.NewUploadHandler(uploadDir, "/uploads")
+	if err != nil {
+		log.Fatalf("Failed to initialize upload handler: %v", err)
+	}
+
 	// Setup Gin
 	r := gin.Default()
 
@@ -38,6 +47,9 @@ func main() {
 		}
 		c.Next()
 	})
+
+	// Static serving for uploaded assets (public; URLs are unguessable)
+	r.Static("/uploads", uploadDir)
 
 	// Public routes
 	api := r.Group("/api")
@@ -77,6 +89,9 @@ func main() {
 		authorized.GET("/ai/config", aiHandler.GetConfig)
 		authorized.PUT("/ai/config", aiHandler.UpdateConfig)
 		authorized.POST("/ai/chat", aiHandler.Chat)
+
+		// Uploads
+		authorized.POST("/uploads/image", uploadHandler.UploadImage)
 	}
 
 	port := os.Getenv("PORT")

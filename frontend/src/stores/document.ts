@@ -484,29 +484,25 @@ export const useDocumentStore = defineStore('document', () => {
   function updateModuleStyles(id: string, styles: Partial<ModuleStyles>) {
     saveToHistory()
 
-    // 创建整个 document 的新引用确保响应式
-    const newDocument = JSON.parse(JSON.stringify(document.value))
-    const module = findModuleById(newDocument.root, id)
+    // 直接 mutation，只在被修改的模块触发响应式更新
+    const module = findModuleById(document.value.root, id)
     if (module) {
       module.styles = { ...module.styles, ...styles }
     }
 
-    newDocument.updatedAt = new Date().toISOString()
-    document.value = newDocument
+    document.value.updatedAt = new Date().toISOString()
   }
 
   function updateModuleProps(id: string, props: Partial<ModuleSpecificProps>) {
     saveToHistory()
 
-    // 创建整个 document 的新引用确保响应式
-    const newDocument = JSON.parse(JSON.stringify(document.value))
-    const module = findModuleById(newDocument.root, id)
+    // 直接 mutation，只在被修改的模块触发响应式更新
+    const module = findModuleById(document.value.root, id)
     if (module) {
       module.props = { ...module.props, ...props } as ModuleSpecificProps
     }
 
-    newDocument.updatedAt = new Date().toISOString()
-    document.value = newDocument
+    document.value.updatedAt = new Date().toISOString()
   }
 
   // 原子化替换整个模块（支持 styles、props、type、children 的全量替换）

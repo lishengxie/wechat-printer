@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { inject, ref, computed } from 'vue'
+import RichTextEditor from '@/components/RichTextEditor.vue'
+import { useDocumentStore } from '@/stores/document'
 import type { Module, HeadingModuleProps } from '@/types/document'
 
 interface Props {
@@ -7,6 +9,9 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const documentStore = useDocumentStore()
+const isPreviewMode = inject('isPreviewMode', ref(false))
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '12px 0',
@@ -53,6 +58,10 @@ const barColor = computed(() => {
   }
   return colors[level] || '#3b82f6'
 })
+
+function onTextUpdate(content: string) {
+  documentStore.updateModuleProps(props.module.id, { text: content })
+}
 </script>
 
 <template>
@@ -61,10 +70,14 @@ const barColor = computed(() => {
     <template v-if="module.props.variant === 'numbered'">
       <div class="numbered-inner">
         <div class="numbered-bar" :style="{ backgroundColor: barColor }"></div>
-        <h2 class="numbered-text" :style="headingStyle">
+        <div class="numbered-text" :style="headingStyle">
           <span v-if="numberingPrefix" class="numbering-prefix" :style="{ color: barColor }">{{ numberingPrefix }}</span>
-          {{ module.props.text }}
-        </h2>
+          <RichTextEditor
+            :content="module.props.text"
+            :editable="!isPreviewMode"
+            @update:content="onTextUpdate"
+          />
+        </div>
       </div>
     </template>
 
@@ -72,9 +85,13 @@ const barColor = computed(() => {
     <template v-if="module.props.variant === 'left-bar'">
       <div class="leftbar-inner">
         <div class="leftbar-bar" :style="{ backgroundColor: barColor }"></div>
-        <h2 class="leftbar-text" :style="headingStyle">
-          {{ module.props.text }}
-        </h2>
+        <div class="leftbar-text" :style="headingStyle">
+          <RichTextEditor
+            :content="module.props.text"
+            :editable="!isPreviewMode"
+            @update:content="onTextUpdate"
+          />
+        </div>
       </div>
     </template>
 
@@ -82,20 +99,28 @@ const barColor = computed(() => {
     <template v-if="module.props.variant === 'center'">
       <div class="center-inner">
         <div class="center-line"></div>
-        <h2 class="center-text" :style="{ ...headingStyle, textAlign: 'center' }">
+        <div :style="{ ...headingStyle, textAlign: 'center' }">
           <span v-if="numberingPrefix" class="numbering-prefix" :style="{ color: barColor }">{{ numberingPrefix }}</span>
-          {{ module.props.text }}
-        </h2>
+          <RichTextEditor
+            :content="module.props.text"
+            :editable="!isPreviewMode"
+            @update:content="onTextUpdate"
+          />
+        </div>
         <div class="center-line"></div>
       </div>
     </template>
 
     <!-- 极简风 -->
     <template v-if="module.props.variant === 'simple'">
-      <h2 class="simple-text" :style="headingStyle">
+      <div :style="headingStyle">
         <span v-if="numberingPrefix" class="numbering-prefix" :style="{ color: barColor }">{{ numberingPrefix }}</span>
-        {{ module.props.text }}
-      </h2>
+        <RichTextEditor
+          :content="module.props.text"
+          :editable="!isPreviewMode"
+          @update:content="onTextUpdate"
+        />
+      </div>
     </template>
   </div>
 </template>
@@ -111,11 +136,13 @@ const barColor = computed(() => {
   align-items: stretch;
   gap: 12px;
 }
+
 .numbered-bar {
   width: 4px;
   border-radius: 2px;
   flex-shrink: 0;
 }
+
 .numbered-text {
   word-break: break-word;
   flex: 1;
@@ -127,11 +154,13 @@ const barColor = computed(() => {
   align-items: stretch;
   gap: 12px;
 }
+
 .leftbar-bar {
   width: 4px;
   border-radius: 2px;
   flex-shrink: 0;
 }
+
 .leftbar-text {
   word-break: break-word;
   flex: 1;
@@ -144,14 +173,12 @@ const barColor = computed(() => {
   align-items: center;
   gap: 12px;
 }
+
 .center-line {
   width: 60px;
   height: 2px;
   background: #e5e7eb;
   border-radius: 1px;
-}
-.center-text {
-  word-break: break-word;
 }
 
 /* 极简风 */

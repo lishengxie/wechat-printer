@@ -108,6 +108,45 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   return await response.json()
 }
 
+// 上传图片：使用 FormData，不能复用 request()（它强行设置 JSON Content-Type）
+export interface UploadedImage {
+  url: string
+  filename: string
+  size: number
+  mime: string
+}
+
+export async function uploadImage(file: File): Promise<UploadedImage> {
+  const authStore = useAuthStore()
+  const form = new FormData()
+  form.append('file', file)
+
+  const headers: Record<string, string> = {}
+  if (authStore.token) {
+    headers['Authorization'] = `Bearer ${authStore.token}`
+  }
+
+  const response = await fetch(`${API_BASE}/uploads/image`, {
+    method: 'POST',
+    headers,
+    body: form
+  })
+
+  if (response.status === 401) {
+    authStore.clearAuth()
+    router.push('/login')
+    throw new Error('Unauthorized')
+  }
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}))
+    throw new Error(body.error || `Upload failed: ${response.status}`)
+  }
+
+  const json = await response.json()
+  return json.data as UploadedImage
+}
+
 function backendToFrontend(backend: BackendLayout): Layout {
   let document: Document
   try {

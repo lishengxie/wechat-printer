@@ -32,3 +32,6 @@ go.work
 
 # Logs
 *.log
+
+# Uploaded user assets
+uploads/
