@@ -124,7 +124,7 @@ onMounted(loadUsers)
       width="400px"
       @close="resetForm"
     >
-      <el-form label-position="top">
+      <el-form :model="form" label-position="top">
         <el-form-item label="用户名">
           <el-input v-model="form.username" placeholder="username" />
         </el-form-item>
