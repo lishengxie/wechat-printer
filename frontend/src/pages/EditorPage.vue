@@ -10,7 +10,7 @@ import EditorCanvas from '@/components/EditorCanvas.vue'
 import PropertyPanel from '@/components/PropertyPanel.vue'
 import PreviewCanvas from '@/components/PreviewCanvas.vue'
 import AIChatDialog from '@/components/AIChatDialog.vue'
-import api from '@/services/api'
+import api, { type Layout } from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,6 +27,7 @@ const articleMeta = ref({
   author: '',
   summary: '',
   cover_image: '',
+  layout_id: '',
   status: 'draft' as 'draft' | 'published'
 })
 provide('articleMeta', articleMeta)
@@ -61,7 +62,43 @@ function handleRedo() {
   documentStore.redo()
 }
 
+// 样式选择器（模板选择弹窗）
+const showStylePicker = ref(false)
+const applyingTemplate = ref(false)
+const availableTemplates = ref<Layout[]>([])
+const associatedTemplate = ref<Layout | null>(null)
+provide('associatedTemplate', associatedTemplate)
+
+async function loadTemplates() {
+  try {
+    availableTemplates.value = await api.listLayouts()
+  } catch (e) {
+    console.warn('Failed to load templates:', e)
+  }
+}
+
+async function selectTemplate(tmpl: Layout) {
+  if (applyingTemplate.value) return
+  applyingTemplate.value = true
+  try {
+    // Just associate the template with the article, don't auto-apply styles
+    associatedTemplate.value = tmpl
+    if (isArticleMode) {
+      articleMeta.value.layout_id = tmpl.id
+    }
+    ElMessage.success(`已关联「${tmpl.name}」，可在属性面板中按模块应用样式`)
+    showStylePicker.value = false
+  } catch (e: any) {
+    ElMessage.error('关联模板失败: ' + e.message)
+  } finally {
+    applyingTemplate.value = false
+  }
+}
+
 onMounted(async () => {
+  // Load layouts list first
+  await loadTemplates()
+
   if (isArticleMode) {
     try {
       const article = await api.getArticle(entityId)
@@ -70,9 +107,19 @@ onMounted(async () => {
         author: article.author,
         summary: article.summary,
         cover_image: article.cover_image,
+        layout_id: article.layout_id,
         status: article.status
       }
-      if (article.content) {
+
+      // Check URL params first (from creation flow)
+      const exampleId = route.query.example as string
+      const templateId = route.query.template as string
+
+      if (exampleId) {
+        // Creation flow with example article — load preset
+        documentStore.loadExampleArticle(exampleId)
+      } else if (article.content) {
+        // Normal load: parse saved article content
         try {
           const doc = JSON.parse(article.content)
           documentStore.setDocument(doc)
@@ -82,15 +129,39 @@ onMounted(async () => {
       } else {
         documentStore.setDocument(createEmptyDocument(article.title))
       }
+
+      // Apply template styles if URL param specified (from creation flow)
+      if (templateId) {
+        const tmpl = availableTemplates.value.find(t => t.id === templateId)
+          || await api.getLayout(templateId)
+        if (tmpl.document) {
+          documentStore.applyTemplateFromDocument(tmpl.document)
+          associatedTemplate.value = tmpl
+        }
+      } else if (article.layout_id) {
+        // Load associated template from article data
+        try {
+          const tmpl = await api.getLayout(article.layout_id)
+          if (tmpl.document) {
+            associatedTemplate.value = tmpl
+          }
+        } catch (e) {
+          console.warn('Failed to load associated template:', e)
+        }
+      }
     } catch (e: any) {
       ElMessage.error('加载文章失败: ' + e.message)
       router.push('/dashboard/articles')
     }
   } else {
-    // template mode
+    // Template mode
     try {
       const layout = await api.getLayout(entityId)
-      documentStore.setDocument(layout.document)
+      if (layout.document) {
+        documentStore.setDocument(layout.document)
+      } else {
+        documentStore.setDocument(createEmptyDocument(layout.name))
+      }
     } catch (e: any) {
       ElMessage.error('加载模板失败: ' + e.message)
       router.push('/dashboard/templates')
@@ -110,6 +181,7 @@ async function handleSave() {
         content: JSON.stringify(documentStore.document)
       })
     } else {
+      // 模板模式：保存完整 Document
       await api.updateLayout(entityId, {
         name: documentStore.document.title,
         document: documentStore.document
@@ -196,9 +268,6 @@ function goBack() {
             @click="togglePreview"
           >
             👁 {{ isPreviewMode ? '编辑' : '预览' }}
-          </el-button>
-          <el-button @click="documentStore.loadTestData">
-            📋 加载示例
           </el-button>
           <el-button
             :type="showAIPanel ? 'primary' : 'default'"
