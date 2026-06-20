@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import type { Article, Layout } from '@/services/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const articles = ref<Article[]>([])
@@ -33,18 +34,19 @@ function editArticleContent(id: string) {
 }
 
 async function deleteArticle(id: string) {
-  if (!confirm('确定要删除这篇文章吗？')) return
   try {
+    await ElMessageBox.confirm('确定要删除这篇文章吗？', '确认删除')
     await api.deleteArticle(id)
+    ElMessage.success('删除成功')
     await loadData()
-  } catch (e: any) {
-    alert('删除失败: ' + e.message)
+  } catch {
+    // cancelled
   }
 }
 
 async function createArticleFromModal() {
   if (!newTitle.value.trim()) {
-    alert('请填写文章标题')
+    ElMessage.warning('请填写文章标题')
     return
   }
   creating.value = true
@@ -63,7 +65,7 @@ async function createArticleFromModal() {
     newLayoutId.value = ''
     router.push(`/editor/article/${article.id}`)
   } catch (e: any) {
-    alert('创建失败: ' + e.message)
+    ElMessage.error('创建失败: ' + e.message)
   } finally {
     creating.value = false
   }
@@ -82,104 +84,98 @@ onMounted(loadData)
   <div class="page">
     <div class="page-header">
       <h2>我的文章</h2>
-      <div class="actions">
-        <button class="btn-primary" @click="showCreateModal = true">+ 新建文章</button>
-      </div>
+      <el-button type="primary" @click="showCreateModal = true">+ 新建文章</el-button>
     </div>
-    <p v-if="error" class="status error">{{ error }}</p>
-    <div v-else-if="articles.length === 0" class="empty">
-      <p>还没有文章，点击右上角新建</p>
-    </div>
-    <div v-else class="card-grid">
-      <div v-for="article in articles" :key="article.id" class="card">
-        <div class="card-header">
-          <h3 class="card-title">{{ article.title }}</h3>
-          <span class="badge" :class="article.status">{{ article.status === 'published' ? '已发布' : '已保存' }}</span>
-        </div>
-        <p v-if="article.summary" class="card-summary">{{ article.summary }}</p>
-        <div class="card-meta">
-          <span v-if="article.author">作者: {{ article.author }}</span>
-          <span>{{ new Date(article.updated_at).toLocaleString() }}</span>
-        </div>
-        <div class="card-actions">
-          <button class="btn-small" @click="editArticleContent(article.id)">编辑排版</button>
-          <button class="btn-small danger" @click="deleteArticle(article.id)">删除</button>
-        </div>
+
+    <div v-loading="loading" class="loading-wrap">
+      <el-alert
+        v-if="error"
+        :title="error"
+        type="error"
+        show-icon
+        :closable="false"
+      />
+      <el-empty
+        v-else-if="!loading && articles.length === 0"
+        description="还没有文章"
+      >
+        <el-button type="primary" @click="showCreateModal = true">新建第一篇文章</el-button>
+      </el-empty>
+      <div v-else class="card-grid">
+        <el-card
+          v-for="article in articles"
+          :key="article.id"
+          shadow="hover"
+          class="article-card"
+        >
+          <div class="card-header">
+            <h3 class="card-title">{{ article.title }}</h3>
+            <el-tag :type="article.status === 'published' ? 'success' : 'info'" size="small">
+              {{ article.status === 'published' ? '已发布' : '已保存' }}
+            </el-tag>
+          </div>
+          <p v-if="article.summary" class="card-summary">{{ article.summary }}</p>
+          <div class="card-meta">
+            <span v-if="article.author">作者: {{ article.author }}</span>
+            <span>{{ new Date(article.updated_at).toLocaleString() }}</span>
+          </div>
+          <template #footer>
+            <div class="card-actions">
+              <el-button size="small" @click="editArticleContent(article.id)">编辑排版</el-button>
+              <el-button size="small" type="danger" plain @click="deleteArticle(article.id)">删除</el-button>
+            </div>
+          </template>
+        </el-card>
       </div>
     </div>
 
-    <!-- Create Article Modal -->
-    <Teleport to="body">
-      <div v-if="showCreateModal" class="modal-overlay" @click.self="closeModal">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>新建文章</h3>
-            <button class="modal-close" @click="closeModal">✕</button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label>标题 *</label>
-              <input v-model="newTitle" type="text" placeholder="文章标题" @keyup.enter="createArticleFromModal" />
-            </div>
-            <div class="form-group">
-              <label>基于模板（可选）</label>
-              <select v-model="newLayoutId">
-                <option value="">空白文章</option>
-                <option v-for="layout in layouts" :key="layout.id" :value="layout.id">{{ layout.name }}</option>
-              </select>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-secondary" @click="closeModal">取消</button>
-            <button class="btn-primary" :disabled="creating" @click="createArticleFromModal">
-              {{ creating ? '创建中...' : '创建并编辑' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- 新建文章弹窗 -->
+    <el-dialog
+      v-model="showCreateModal"
+      title="新建文章"
+      width="480px"
+      @close="closeModal"
+    >
+      <el-form label-position="top">
+        <el-form-item label="标题 *">
+          <el-input
+            v-model="newTitle"
+            placeholder="文章标题"
+            @keyup.enter="createArticleFromModal"
+          />
+        </el-form-item>
+        <el-form-item label="基于模板（可选）">
+          <el-select v-model="newLayoutId" placeholder="选择模板" clearable style="width: 100%">
+            <el-option label="空白文章" value="" />
+            <el-option
+              v-for="layout in layouts"
+              :key="layout.id"
+              :label="layout.name"
+              :value="layout.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="closeModal">取消</el-button>
+        <el-button type="primary" :loading="creating" @click="createArticleFromModal">
+          {{ creating ? '创建中...' : '创建并编辑' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
 .page { max-width: 1000px; margin: 0 auto; }
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-.page-header h2 { font-size: 20px; font-weight: 600; color: #111827; }
-.actions { display: flex; gap: 10px; }
-.btn-primary { padding: 8px 16px; font-size: 13px; font-weight: 500; color: #fff; background: #3b82f6; border: none; border-radius: 6px; cursor: pointer; }
-.btn-primary:hover { background: #2563eb; }
-.btn-primary:disabled { opacity: 0.6; }
-.btn-secondary { padding: 8px 16px; font-size: 13px; font-weight: 500; color: #4b5563; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; }
-.btn-secondary:hover { background: #e5e7eb; }
-.status { text-align: center; color: #6b7280; padding: 40px; }
-.error { color: #dc2626; }
-.empty { text-align: center; padding: 60px; color: #9ca3af; }
+.page-header h2 { font-size: 20px; font-weight: 600; color: var(--el-text-color-primary); margin: 0; }
+.loading-wrap { min-height: 200px; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-.card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 10px; }
-.card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.card-title { font-size: 15px; font-weight: 600; color: #111827; margin: 0; }
-.badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
-.badge.draft { background: #f3f4f6; color: #6b7280; }
-.badge.published { background: #d1fae5; color: #065f46; }
-.card-summary { font-size: 13px; color: #6b7280; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.card-meta { font-size: 12px; color: #9ca3af; display: flex; gap: 12px; }
-.card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; }
-.btn-small { padding: 5px 12px; font-size: 12px; font-weight: 500; border-radius: 5px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; }
-.btn-small:hover { background: #f9fafb; }
-.btn-small.danger { color: #dc2626; border-color: #fecaca; }
-.btn-small.danger:hover { background: #fef2f2; }
-
-/* Modal */
-.modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { width: 90%; max-width: 480px; background: #fff; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #e5e7eb; }
-.modal-header h3 { font-size: 16px; font-weight: 600; color: #111827; margin: 0; }
-.modal-close { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #6b7280; background: transparent; border: none; border-radius: 6px; cursor: pointer; }
-.modal-close:hover { background: #f3f4f6; }
-.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 20px; border-top: 1px solid #e5e7eb; }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-group label { font-size: 13px; font-weight: 500; color: #374151; }
-.form-group input, .form-group select { padding: 10px 12px; font-size: 14px; border: 1px solid #d1d5db; border-radius: 8px; outline: none; font-family: inherit; }
-.form-group input:focus, .form-group select:focus { border-color: #3b82f6; }
+.article-card { cursor: default; }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.card-title { font-size: 15px; font-weight: 600; margin: 0; }
+.card-summary { font-size: 13px; color: var(--el-text-color-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 8px; }
+.card-meta { font-size: 12px; color: var(--el-text-color-placeholder); display: flex; gap: 12px; margin-top: 8px; }
+.card-actions { display: flex; gap: 8px; }
 </style>
