@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import type { Article, Layout } from '@/services/api'
+import { importAndCreateArticle } from '@/services/markdown-importer'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
@@ -15,6 +16,7 @@ const showCreateModal = ref(false)
 const newTitle = ref('')
 const newLayoutId = ref('')
 const creating = ref(false)
+const importingMd = ref(false)
 
 const EXAMPLE_ARTICLES = [
   { id: 'product-review', name: '产品评测文' },
@@ -97,6 +99,38 @@ function closeModal() {
   selectedExample.value = 'blank'
 }
 
+async function handleImportMd() {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.md'
+  input.onchange = async () => {
+    const file = input.files?.[0]
+    if (!file) return
+
+    if (file.size > 1024 * 1024) {
+      ElMessage.info('文件较大（超过 1MB），解析可能需要几秒钟')
+    }
+
+    importingMd.value = true
+    try {
+      const { articleId, localImageCount } = await importAndCreateArticle(file)
+      const title = file.name.replace(/\.md$/i, '')
+      ElMessage.success(`"${title}" 导入成功`)
+      if (localImageCount > 0) {
+        ElMessage.info(`发现 ${localImageCount} 张本地图片，请在编辑器中上传替换`)
+      }
+      await loadData()
+      router.push(`/editor/article/${articleId}`)
+    } catch (e: any) {
+      ElMessage.error('导入失败: ' + (e.message || '未知错误'))
+    } finally {
+      importingMd.value = false
+      input.remove()
+    }
+  }
+  input.click()
+}
+
 onMounted(loadData)
 </script>
 
@@ -104,7 +138,12 @@ onMounted(loadData)
   <div class="page">
     <div class="page-header">
       <h2>我的文章</h2>
-      <el-button type="primary" @click="showCreateModal = true">+ 新建文章</el-button>
+      <div class="page-actions">
+        <el-button :loading="importingMd" @click="handleImportMd">
+          📄 导入 Markdown
+        </el-button>
+        <el-button type="primary" @click="showCreateModal = true">+ 新建文章</el-button>
+      </div>
     </div>
 
     <div v-loading="loading" class="loading-wrap">
@@ -203,6 +242,7 @@ onMounted(loadData)
 <style scoped>
 .page { max-width: 1000px; margin: 0 auto; }
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.page-actions { display: flex; gap: 8px; align-items: center; }
 .page-header h2 { font-size: 20px; font-weight: 600; color: var(--el-text-color-primary); margin: 0; }
 .loading-wrap { min-height: 200px; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
