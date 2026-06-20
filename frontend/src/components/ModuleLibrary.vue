@@ -111,7 +111,7 @@ function handleClickAdd(module: GroupedModules['items'][number]) {
 <style scoped>
 .module-library {
   padding: 16px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
@@ -153,7 +153,7 @@ function handleClickAdd(module: GroupedModules['items'][number]) {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
