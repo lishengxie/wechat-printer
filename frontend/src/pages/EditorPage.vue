@@ -131,7 +131,7 @@ async function handleExportHTML() {
     const result = await api.exportHTML(documentStore.document)
     exportedHTML.value = result.html
   } catch (error) {
-    exportedHTML.value = '导出失败，请重试'
+    ElMessage.error('导出失败')
     console.error('Export failed:', error)
   } finally {
     isExporting.value = false
