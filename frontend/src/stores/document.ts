@@ -603,9 +603,10 @@ export const useDocumentStore = defineStore('document', () => {
   }
 
   // 应用模板模块样式：将模板中同类型模块的 styles 合并到指定模块
-  function applyTemplateModuleStyles(templateDocument: Document, targetModuleId: string) {
+  // 返回 boolean 表示是否成功应用了样式
+  function applyTemplateModuleStyles(templateDocument: Document, targetModuleId: string): boolean {
     const targetModule = findModuleById(document.value.root, targetModuleId)
-    if (!targetModule) return
+    if (!targetModule) return false
 
     // Find the matching module in template by type
     let templateModule: Module | null = null
@@ -621,7 +622,9 @@ export const useDocumentStore = defineStore('document', () => {
 
     if (templateModule && templateModule.styles) {
       updateModuleStyles(targetModuleId, templateModule.styles)
+      return true
     }
+    return false
   }
 
   return {

@@ -162,7 +162,7 @@
       <template v-if="isArticleMode && associatedTemplate?.document && templateModuleStyles">
         <div class="property-section">
           <div class="section-header">
-            <span class="section-title">
+            <span class="template-section-title">
               <el-tag size="small" type="success" effect="light" style="margin-right: 4px;">模板</el-tag>
               {{ (associatedTemplate as any)?.name }}
             </span>
@@ -314,11 +314,13 @@ const templateModuleStyles = computed(() => {
 function applyTemplateStyle() {
   if (!associatedTemplate.value?.document || !selectedModule.value) return
 
-  const prev = documentStore.selectedModuleId
-  if (!prev) return
+  const moduleId = documentStore.selectedModuleId
+  if (!moduleId) return
 
-  documentStore.applyTemplateModuleStyles(associatedTemplate.value.document, prev)
-  ElMessage.success('已应用模板样式')
+  const applied = documentStore.applyTemplateModuleStyles(associatedTemplate.value.document, moduleId)
+  if (applied) {
+    ElMessage.success('已应用模板样式')
+  }
 }
 </script>
 
@@ -340,7 +342,7 @@ function applyTemplateStyle() {
 .slider-value { font-size: 12px; color: var(--el-text-color-secondary); width: 40px; text-align: right; flex-shrink: 0; }
 .property-section { padding: 12px; border-top: 1px solid var(--el-border-color-light); }
 .section-header { margin-bottom: 8px; }
-.section-title { font-size: 13px; font-weight: 600; color: var(--el-text-color-primary); display: flex; align-items: center; }
+.template-section-title { font-size: 13px; font-weight: 600; color: var(--el-text-color-primary); display: flex; align-items: center; }
 .template-style-card { background: var(--el-fill-color-light); border-radius: 8px; padding: 10px; }
 .template-style-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .template-module-type { font-size: 12px; font-weight: 600; color: var(--el-text-color-regular); }
