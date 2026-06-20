@@ -1,220 +1,161 @@
 <template>
-  <div class="property-panel bg-white border-l h-full overflow-y-auto">
-    <div class="p-4 border-b">
-      <h3 class="font-semibold text-gray-700">属性设置</h3>
+  <div class="property-panel">
+    <div class="panel-header">
+      <h3>属性设置</h3>
     </div>
 
-    <div v-if="!selectedModule" class="p-6 text-center text-gray-400">
-      <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-      </svg>
-      <p class="text-sm">选中模块以编辑属性</p>
+    <div v-if="!selectedModule" class="panel-empty">
+      <el-empty description="选中模块以编辑属性" :image-size="80" />
     </div>
 
-    <div v-else class="p-4 space-y-6">
-      <!-- Module Type Info -->
-      <div class="pb-4 border-b border-gray-100">
-        <span class="text-xs font-medium text-gray-500 uppercase">模块类型</span>
-        <div class="font-medium text-gray-800 mt-1">{{ moduleTypeName }}</div>
+    <div v-else class="panel-body">
+      <!-- 模块类型 -->
+      <div class="section">
+        <span class="section-title">模块类型</span>
+        <div class="type-name">{{ moduleTypeName }}</div>
       </div>
 
-      <!-- Style Controls -->
-      <div class="space-y-4">
-        <h4 class="text-xs font-medium text-gray-500 uppercase">样式设置</h4>
+      <!-- 样式设置 -->
+      <div class="section">
+        <span class="section-title">样式设置</span>
 
-        <!-- Text Color -->
-        <div v-if="supportsTextColor">
-          <label class="block text-sm text-gray-600 mb-1">文字颜色</label>
-          <div class="flex gap-2">
-            <input
-              type="color"
-              :value="selectedModule.styles.color || '#333333'"
-              @input="updateStyle('color', ($event.target as HTMLInputElement).value)"
-              class="w-10 h-10 rounded border cursor-pointer"
-            />
-            <input
-              type="text"
-              :value="selectedModule.styles.color || '#333333'"
-              @change="updateStyle('color', ($event.target as HTMLInputElement).value)"
-              class="flex-1 px-3 py-2 border rounded text-sm"
-            />
-          </div>
+        <!-- 文字颜色 -->
+        <div v-if="supportsTextColor" class="field">
+          <label class="field-label">文字颜色</label>
+          <el-color-picker
+            :model-value="selectedModule.styles.color || '#333333'"
+            @change="(v: any) => updateStyle('color', v || '#333333')"
+            show-alpha
+          />
         </div>
 
-        <!-- Background Color -->
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">背景颜色</label>
-          <div class="flex gap-2">
-            <input
-              type="color"
-              :value="styleBackgroundColor"
-              @input="updateStyle('backgroundColor', ($event.target as HTMLInputElement).value)"
-              class="w-10 h-10 rounded border cursor-pointer"
-            />
-            <input
-              type="text"
-              :value="styleBackgroundColor"
-              @change="updateStyle('backgroundColor', ($event.target as HTMLInputElement).value)"
-              class="flex-1 px-3 py-2 border rounded text-sm"
-            />
-          </div>
+        <!-- 背景颜色 -->
+        <div class="field">
+          <label class="field-label">背景颜色</label>
+          <el-color-picker
+            :model-value="selectedModule.styles.backgroundColor || '#ffffff'"
+            @change="(v: any) => updateStyle('backgroundColor', v || '#ffffff')"
+            show-alpha
+          />
         </div>
 
-        <!-- Text Align -->
-        <div v-if="supportsTextAlign">
-          <label class="block text-sm text-gray-600 mb-1">对齐方式</label>
-          <div class="flex gap-2">
-            <button
-              v-for="align in alignOptions"
-              :key="align.value"
-              @click="updateStyle('textAlign', align.value)"
-              class="flex-1 px-3 py-2 border rounded text-sm hover:bg-gray-50"
-              :class="{ 'bg-blue-50 border-blue-400 text-blue-600': selectedModule.styles.textAlign === align.value }"
-            >
-              {{ align.label }}
-            </button>
-          </div>
+        <!-- 对齐方式 -->
+        <div v-if="supportsTextAlign" class="field">
+          <label class="field-label">对齐方式</label>
+          <el-radio-group
+            :model-value="selectedModule.styles.textAlign || 'left'"
+            @change="(v: any) => updateStyle('textAlign', v)"
+          >
+            <el-radio-button v-for="opt in alignOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </el-radio-button>
+          </el-radio-group>
         </div>
 
-        <!-- Font Size -->
-        <div v-if="supportsTextColor">
-          <label class="block text-sm text-gray-600 mb-1">字体大小</label>
-          <input
-            type="text"
-            :value="selectedModule.styles.fontSize || '16px'"
-            @change="updateStyle('fontSize', ($event.target as HTMLInputElement).value)"
-            class="w-full px-3 py-2 border rounded text-sm"
+        <!-- 字体大小 -->
+        <div v-if="supportsTextColor" class="field">
+          <label class="field-label">字体大小</label>
+          <el-input
+            :model-value="selectedModule.styles.fontSize || '16px'"
+            @change="(v: string) => updateStyle('fontSize', v)"
             placeholder="16px"
           />
         </div>
 
-        <!-- Font Family -->
-        <div v-if="supportsTextColor">
-          <label class="block text-sm text-gray-600 mb-1">字体</label>
-          <select
-            :value="selectedModule.styles.fontFamily || ''"
-            @change="updateStyle('fontFamily', ($event.target as HTMLSelectElement).value)"
-            class="w-full px-3 py-2 border rounded text-sm"
+        <!-- 字体 -->
+        <div v-if="supportsTextColor" class="field">
+          <label class="field-label">字体</label>
+          <el-select
+            :model-value="selectedModule.styles.fontFamily || ''"
+            @change="(v: string) => updateStyle('fontFamily', v)"
+            style="width: 100%"
           >
-            <option value="">默认</option>
-            <option value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">系统默认 (无衬线)</option>
-            <option value="-apple-system, 'Noto Serif SC', Georgia, serif">衬线体 (宋体/Georgia)</option>
-            <option value="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif">苹方 / 微软雅黑</option>
-            <option value="-apple-system, 'Noto Serif SC', 'KaiTi', serif">楷体</option>
-            <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica Neue</option>
-            <option value="Georgia, 'Noto Serif SC', serif">Georgia</option>
-            <option value="'Courier New', monospace">等宽字体 (Courier)</option>
-          </select>
+            <el-option v-for="opt in fontFamilyOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+          </el-select>
         </div>
 
-        <!-- Padding with sliders -->
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">内边距</label>
-          <div class="space-y-1.5">
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-400 w-5">上</span>
-              <input type="range" min="0" max="80" :value="paddingTop" @change="updatePadding('top', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
-              <span class="text-xs text-gray-500 w-10 text-right">{{ paddingTop }}px</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-400 w-5">右</span>
-              <input type="range" min="0" max="80" :value="paddingRight" @change="updatePadding('right', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
-              <span class="text-xs text-gray-500 w-10 text-right">{{ paddingRight }}px</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-400 w-5">下</span>
-              <input type="range" min="0" max="80" :value="paddingBottom" @change="updatePadding('bottom', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
-              <span class="text-xs text-gray-500 w-10 text-right">{{ paddingBottom }}px</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-400 w-5">左</span>
-              <input type="range" min="0" max="80" :value="paddingLeft" @change="updatePadding('left', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
-              <span class="text-xs text-gray-500 w-10 text-right">{{ paddingLeft }}px</span>
+        <!-- 内边距 -->
+        <div class="field">
+          <label class="field-label">内边距</label>
+          <div class="slider-group">
+            <div v-for="(label, side) in { top: '上', right: '右', bottom: '下', left: '左' }" :key="side" class="slider-row">
+              <span class="slider-label">{{ label }}</span>
+              <el-slider
+                :model-value="paddingVals[['top','right','bottom','left'].indexOf(side)]"
+                @change="(v: number) => updatePadding(side, v)"
+                :min="0"
+                :max="80"
+                :show-tooltip="false"
+                size="small"
+              />
+              <span class="slider-value">{{ paddingVals[['top','right','bottom','left'].indexOf(side)] }}px</span>
             </div>
           </div>
         </div>
 
-        <!-- Margin with sliders -->
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">外边距</label>
-          <div class="space-y-1.5">
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-400 w-5">上</span>
-              <input type="range" min="0" max="80" :value="marginTop" @change="updateMargin('top', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
-              <span class="text-xs text-gray-500 w-10 text-right">{{ marginTop }}px</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-400 w-5">右</span>
-              <input type="range" min="0" max="80" :value="marginRight" @change="updateMargin('right', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
-              <span class="text-xs text-gray-500 w-10 text-right">{{ marginRight }}px</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-400 w-5">下</span>
-              <input type="range" min="0" max="80" :value="marginBottom" @change="updateMargin('bottom', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
-              <span class="text-xs text-gray-500 w-10 text-right">{{ marginBottom }}px</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-400 w-5">左</span>
-              <input type="range" min="0" max="80" :value="marginLeft" @change="updateMargin('left', ($event.target as HTMLInputElement).value)" class="flex-1 h-1.5 accent-blue-500" />
-              <span class="text-xs text-gray-500 w-10 text-right">{{ marginLeft }}px</span>
+        <!-- 外边距 -->
+        <div class="field">
+          <label class="field-label">外边距</label>
+          <div class="slider-group">
+            <div v-for="(label, side) in { top: '上', right: '右', bottom: '下', left: '左' }" :key="side" class="slider-row">
+              <span class="slider-label">{{ label }}</span>
+              <el-slider
+                :model-value="marginVals[['top','right','bottom','left'].indexOf(side)]"
+                @change="(v: number) => updateMargin(side, v)"
+                :min="0"
+                :max="80"
+                :show-tooltip="false"
+                size="small"
+              />
+              <span class="slider-value">{{ marginVals[['top','right','bottom','left'].indexOf(side)] }}px</span>
             </div>
           </div>
         </div>
 
-        <!-- Border -->
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">边框</label>
-          <input
-            type="text"
-            :value="selectedModule.styles.border || ''"
-            @change="updateStyle('border', ($event.target as HTMLInputElement).value)"
-            class="w-full px-3 py-2 border rounded text-sm"
+        <!-- 边框 -->
+        <div class="field">
+          <label class="field-label">边框</label>
+          <el-input
+            :model-value="selectedModule.styles.border || ''"
+            @change="(v: string) => updateStyle('border', v)"
             placeholder="1px solid #e5e7eb"
           />
         </div>
 
-        <!-- Border Radius -->
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">圆角</label>
-          <input
-            type="text"
-            :value="selectedModule.styles.borderRadius || ''"
-            @change="updateStyle('borderRadius', ($event.target as HTMLInputElement).value)"
-            class="w-full px-3 py-2 border rounded text-sm"
+        <!-- 圆角 -->
+        <div class="field">
+          <label class="field-label">圆角</label>
+          <el-input
+            :model-value="selectedModule.styles.borderRadius || ''"
+            @change="(v: string) => updateStyle('borderRadius', v)"
             placeholder="8px"
           />
         </div>
 
-        <!-- Line Height -->
-        <div v-if="supportsTextColor">
-          <label class="block text-sm text-gray-600 mb-1">行高</label>
-          <input
-            type="text"
-            :value="selectedModule.styles.lineHeight || ''"
-            @change="updateStyle('lineHeight', ($event.target as HTMLInputElement).value)"
-            class="w-full px-3 py-2 border rounded text-sm"
+        <!-- 行高 -->
+        <div v-if="supportsTextColor" class="field">
+          <label class="field-label">行高</label>
+          <el-input
+            :model-value="selectedModule.styles.lineHeight || ''"
+            @change="(v: string) => updateStyle('lineHeight', v)"
             placeholder="1.6"
           />
         </div>
 
-        <!-- Font Weight -->
-        <div v-if="supportsTextColor">
-          <label class="block text-sm text-gray-600 mb-1">字重</label>
-          <select
-            :value="selectedModule.styles.fontWeight || 'normal'"
-            @change="updateStyle('fontWeight', ($event.target as HTMLSelectElement).value)"
-            class="w-full px-3 py-2 border rounded text-sm"
+        <!-- 字重 -->
+        <div v-if="supportsTextColor" class="field">
+          <label class="field-label">字重</label>
+          <el-select
+            :model-value="selectedModule.styles.fontWeight || 'normal'"
+            @change="(v: string) => updateStyle('fontWeight', v)"
+            style="width: 100%"
           >
-            <option value="normal">正常</option>
-            <option value="bold">加粗</option>
-            <option value="300">细体</option>
-            <option value="500">中等</option>
-            <option value="600">半粗</option>
-          </select>
+            <el-option v-for="opt in fontWeightOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+          </el-select>
         </div>
       </div>
 
-      <!-- Module-Specific Property Editor (dynamically loaded from registry) -->
+      <!-- 模块专用属性编辑器 -->
       <component :is="propertyEditor" />
     </div>
   </div>
@@ -245,10 +186,24 @@ const moduleTypeName = computed(() => {
   return reg ? reg.name : selectedModule.value.type
 })
 
-const styleBackgroundColor = computed(() => {
-  const color = selectedModule.value?.styles.backgroundColor
-  return color && color !== 'transparent' ? color : '#ffffff'
-})
+const fontFamilyOptions = [
+  { label: '默认', value: '' },
+  { label: '系统默认 (无衬线)', value: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" },
+  { label: '衬线体', value: "-apple-system, 'Noto Serif SC', Georgia, serif" },
+  { label: '苹方 / 微软雅黑', value: "-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" },
+  { label: '楷体', value: "-apple-system, 'Noto Serif SC', 'KaiTi', serif" },
+  { label: 'Helvetica Neue', value: "'Helvetica Neue', Helvetica, Arial, sans-serif" },
+  { label: 'Georgia', value: "Georgia, 'Noto Serif SC', serif" },
+  { label: '等宽字体 (Courier)', value: "'Courier New', monospace" },
+]
+
+const fontWeightOptions = [
+  { label: '正常', value: 'normal' },
+  { label: '细体', value: '300' },
+  { label: '中等', value: '500' },
+  { label: '半粗', value: '600' },
+  { label: '加粗', value: 'bold' },
+]
 
 const alignOptions = [
   { label: '左', value: 'left' as const },
@@ -256,7 +211,46 @@ const alignOptions = [
   { label: '右', value: 'right' as const }
 ]
 
-// Parse padding/margin into individual values
+function updateStyle(key: string, value: string | undefined) {
+  if (selectedModule.value) {
+    documentStore.updateModuleStyles(selectedModule.value.id, { [key]: value })
+  }
+}
+
+function updatePadding(side: string, val: number) {
+  if (!selectedModule.value) return
+  const cur = selectedModule.value.styles.padding || '0'
+  const parts = cur.split(/\s+/).map(v => parseInt(v) || 0)
+  const [t = 0, r = t, b = t, l = t] = parts.length === 1 ? [parts[0], parts[0], parts[0], parts[0]]
+    : parts.length === 2 ? [parts[0], parts[1], parts[0], parts[1]]
+    : parts.length === 3 ? [parts[0], parts[1], parts[2], parts[1]]
+    : [parts[0], parts[1], parts[2], parts[3]]
+  const map: Record<string, string> = {
+    top: `${val}px ${r}px ${b}px ${l}px`,
+    right: `${t}px ${val}px ${b}px ${l}px`,
+    bottom: `${t}px ${r}px ${val}px ${l}px`,
+    left: `${t}px ${r}px ${b}px ${val}px`
+  }
+  updateStyle('padding', map[side])
+}
+
+function updateMargin(side: string, val: number) {
+  if (!selectedModule.value) return
+  const cur = selectedModule.value.styles.margin || '0 0 16px 0'
+  const parts = cur.split(/\s+/).map(v => parseInt(v) || 0)
+  const [t = 0, r = t, b = t, l = t] = parts.length === 1 ? [parts[0], parts[0], parts[0], parts[0]]
+    : parts.length === 2 ? [parts[0], parts[1], parts[0], parts[1]]
+    : parts.length === 3 ? [parts[0], parts[1], parts[2], parts[1]]
+    : [parts[0], parts[1], parts[2], parts[3]]
+  const map: Record<string, string> = {
+    top: `${val}px ${r}px ${b}px ${l}px`,
+    right: `${t}px ${val}px ${b}px ${l}px`,
+    bottom: `${t}px ${r}px ${val}px ${l}px`,
+    left: `${t}px ${r}px ${b}px ${val}px`
+  }
+  updateStyle('margin', map[side])
+}
+
 function parseSpacing(val: string | undefined, fallback = '0'): number[] {
   const parts = (val || fallback).split(/\s+/).map(v => parseInt(v) || 0)
   if (parts.length === 1) return [parts[0], parts[0], parts[0], parts[0]]
@@ -265,44 +259,24 @@ function parseSpacing(val: string | undefined, fallback = '0'): number[] {
   return [parts[0], parts[1], parts[2], parts[3]]
 }
 
-const paddingTop = computed(() => parseSpacing(selectedModule.value?.styles.padding)[0])
-const paddingRight = computed(() => parseSpacing(selectedModule.value?.styles.padding)[1])
-const paddingBottom = computed(() => parseSpacing(selectedModule.value?.styles.padding)[2])
-const paddingLeft = computed(() => parseSpacing(selectedModule.value?.styles.padding)[3])
-const marginTop = computed(() => parseSpacing(selectedModule.value?.styles.margin, '0 0 16px 0')[0])
-const marginRight = computed(() => parseSpacing(selectedModule.value?.styles.margin, '0 0 16px 0')[1])
-const marginBottom = computed(() => parseSpacing(selectedModule.value?.styles.margin, '0 0 16px 0')[2])
-const marginLeft = computed(() => parseSpacing(selectedModule.value?.styles.margin, '0 0 16px 0')[3])
-
-function updateStyle(key: string, value: string | undefined) {
-  if (selectedModule.value) {
-    documentStore.updateModuleStyles(selectedModule.value.id, { [key]: value })
-  }
-}
-
-function updatePadding(side: string, px: string) {
-  if (!selectedModule.value) return
-  const cur = selectedModule.value.styles.padding || '0'
-  const [t, r, b, l] = parseSpacing(cur)
-  const map: Record<string, string> = {
-    top: `${px}px ${r}px ${b}px ${l}px`,
-    right: `${t}px ${px}px ${b}px ${l}px`,
-    bottom: `${t}px ${r}px ${px}px ${l}px`,
-    left: `${t}px ${r}px ${b}px ${px}px`
-  }
-  updateStyle('padding', map[side])
-}
-
-function updateMargin(side: string, px: string) {
-  if (!selectedModule.value) return
-  const cur = selectedModule.value.styles.margin || '0 0 16px 0'
-  const [t, r, b, l] = parseSpacing(cur, '0 0 16px 0')
-  const map: Record<string, string> = {
-    top: `${px}px ${r}px ${b}px ${l}px`,
-    right: `${t}px ${px}px ${b}px ${l}px`,
-    bottom: `${t}px ${r}px ${px}px ${l}px`,
-    left: `${t}px ${r}px ${b}px ${px}px`
-  }
-  updateStyle('margin', map[side])
-}
+const paddingVals = computed(() => parseSpacing(selectedModule.value?.styles.padding))
+const marginVals = computed(() => parseSpacing(selectedModule.value?.styles.margin, '0 0 16px 0'))
 </script>
+
+<style scoped>
+.property-panel { height: 100%; overflow-y: auto; background: var(--el-bg-color); border-left: 1px solid var(--el-border-color-light); }
+.panel-header { padding: 16px; border-bottom: 1px solid var(--el-border-color-light); }
+.panel-header h3 { margin: 0; font-size: 15px; font-weight: 600; color: var(--el-text-color-primary); }
+.panel-empty { padding: 40px 16px; }
+.panel-body { padding: 16px; display: flex; flex-direction: column; gap: 20px; }
+.section { display: flex; flex-direction: column; gap: 12px; }
+.section-title { font-size: 12px; font-weight: 600; color: var(--el-text-color-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.type-name { font-size: 14px; font-weight: 500; color: var(--el-text-color-primary); }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 13px; color: var(--el-text-color-regular); }
+.slider-group { display: flex; flex-direction: column; gap: 6px; }
+.slider-row { display: flex; align-items: center; gap: 8px; }
+.slider-label { font-size: 12px; color: var(--el-text-color-secondary); width: 16px; flex-shrink: 0; }
+.slider-row .el-slider { flex: 1; }
+.slider-value { font-size: 12px; color: var(--el-text-color-secondary); width: 40px; text-align: right; flex-shrink: 0; }
+</style>
