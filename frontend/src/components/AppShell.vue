@@ -11,11 +11,17 @@ const username = computed(() => authStore.user?.username || '')
 const isAdmin = computed(() => authStore.isAdmin)
 
 const navItems = computed(() => [
-  { path: '/dashboard/articles', label: '文章', icon: '📝' },
-  { path: '/dashboard/templates', label: '模板库', icon: '📐' },
-  { path: '/dashboard/ai-config', label: 'AI 助手', icon: '🤖' },
-  ...(isAdmin.value ? [{ path: '/admin/users', label: '用户管理', icon: '👥' }] : [])
+  { path: '/dashboard/articles', label: '文章', icon: 'Notebook' },
+  { path: '/dashboard/templates', label: '模板库', icon: 'List' },
+  { path: '/dashboard/ai-config', label: 'AI 助手', icon: 'Cpu' },
+  ...(isAdmin.value ? [{ path: '/admin/users', label: '用户管理', icon: 'User' }] : [])
 ])
+
+const defaultActive = computed(() => route.path)
+
+function handleMenuSelect(path: string) {
+  router.push(path)
+}
 
 function logout() {
   authStore.clearAuth()
@@ -25,28 +31,28 @@ function logout() {
 
 <template>
   <div class="shell">
-    <aside class="sidebar">
+    <el-menu
+      :default-active="defaultActive"
+      class="sidebar"
+      @select="handleMenuSelect"
+    >
       <div class="sidebar-header">
         <span class="logo">📰</span>
         <span class="logo-text">公众号编辑器</span>
       </div>
-      <nav class="sidebar-nav">
-        <router-link
-          v-for="item in navItems"
-          :key="item.path"
-          :to="item.path"
-          class="nav-link"
-          :class="{ active: route.path.startsWith(item.path) }"
-        >
-          <span class="nav-icon">{{ item.icon }}</span>
-          <span class="nav-label">{{ item.label }}</span>
-        </router-link>
-      </nav>
+      <el-menu-item
+        v-for="item in navItems"
+        :key="item.path"
+        :index="item.path"
+      >
+        <el-icon><component :is="item.icon" /></el-icon>
+        <span>{{ item.label }}</span>
+      </el-menu-item>
       <div class="sidebar-footer">
         <span class="user-badge">{{ username }}</span>
-        <button class="logout-btn" @click="logout">退出</button>
+        <el-button size="small" type="danger" plain @click="logout">退出</el-button>
       </div>
-    </aside>
+    </el-menu>
     <main class="shell-content">
       <router-view />
     </main>
@@ -57,53 +63,40 @@ function logout() {
 .shell { display: flex; height: 100vh; }
 .sidebar {
   width: 200px;
-  background: #fff;
-  border-right: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
   flex-shrink: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid var(--el-border-color-light);
 }
 .sidebar-header {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 20px 16px 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 .logo { font-size: 22px; }
-.logo-text { font-size: 14px; font-weight: 600; color: #111827; }
-.sidebar-nav {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 8px;
-}
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #4b5563;
-  text-decoration: none;
-  border-radius: 6px;
-  transition: all 0.15s;
-}
-.nav-link:hover { background: #f3f4f6; color: #1f2937; }
-.nav-link.active { background: #dbeafe; color: #2563eb; }
-.nav-icon { font-size: 16px; }
-.nav-label { font-size: 14px; }
+.logo-text { font-size: 14px; font-weight: 600; color: var(--el-text-color-primary); }
 .sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  width: 200px;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 16px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--el-border-color-light);
 }
-.user-badge { font-size: 12px; color: #6b7280; background: #f3f4f6; padding: 3px 8px; border-radius: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80px; }
-.logout-btn { padding: 4px 10px; font-size: 12px; font-weight: 500; color: #dc2626; background: transparent; border: 1px solid #fecaca; border-radius: 6px; cursor: pointer; white-space: nowrap; }
-.logout-btn:hover { background: #fef2f2; }
-.shell-content { flex: 1; overflow: auto; background: #f3f4f6; padding: 24px; }
+.user-badge {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  background: var(--el-fill-color-light);
+  padding: 3px 8px;
+  border-radius: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 80px;
+}
+.shell-content { flex: 1; overflow: auto; background: #f5f7fa; padding: 24px; }
 </style>
