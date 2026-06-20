@@ -164,7 +164,7 @@
           <div class="section-header">
             <span class="template-section-title">
               <el-tag size="small" type="success" effect="light" style="margin-right: 4px;">模板</el-tag>
-              {{ (associatedTemplate as any)?.name }}
+              {{ associatedTemplate?.name }}
             </span>
           </div>
           <div class="template-style-card">
@@ -176,7 +176,7 @@
             </div>
             <div class="template-style-tags">
               <el-tag
-                v-for="(value, key) in templateModuleStyles"
+                v-for="(value, key) in visibleTemplateStyles"
                 :key="key"
                 size="small"
                 hit
@@ -199,6 +199,7 @@ import { moduleRegistry } from '@/registry/modules'
 import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
 import type { Layout } from '@/services/api'
+import type { Module } from '@/types/document'
 import type { Ref } from 'vue'
 
 const documentStore = useDocumentStore()
@@ -296,7 +297,7 @@ const templateModuleStyles = computed(() => {
   const targetType = selectedModule.value.type
 
   // Find module of same type in template
-  function findInTemplate(module: any): any | null {
+  function findInTemplate(module: Module): Module | null {
     if (module.type === targetType) return module
     if (module.children) {
       for (const child of module.children) {
@@ -311,6 +312,20 @@ const templateModuleStyles = computed(() => {
   return found ? found.styles : null
 })
 
+// 只显示关键样式标签，避免信息过载
+const keyStyleKeys = ['backgroundColor', 'color', 'fontSize', 'fontWeight', 'textAlign', 'borderRadius', 'border']
+const visibleTemplateStyles = computed(() => {
+  const styles = templateModuleStyles.value
+  if (!styles) return null
+  const filtered: Record<string, string> = {}
+  for (const key of keyStyleKeys) {
+    if (styles[key]) {
+      filtered[key] = styles[key]
+    }
+  }
+  return Object.keys(filtered).length > 0 ? filtered : null
+})
+
 function applyTemplateStyle() {
   if (!associatedTemplate.value?.document || !selectedModule.value) return
 
@@ -320,6 +335,8 @@ function applyTemplateStyle() {
   const applied = documentStore.applyTemplateModuleStyles(associatedTemplate.value.document, moduleId)
   if (applied) {
     ElMessage.success('已应用模板样式')
+  } else {
+    ElMessage.info('当前模板中未找到同类型模块的样式')
   }
 }
 </script>
