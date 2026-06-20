@@ -5,6 +5,7 @@ import api from '@/services/api'
 import type { Article, Layout } from '@/services/api'
 import { importAndCreateArticle } from '@/services/markdown-importer'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const articles = ref<Article[]>([])
@@ -131,6 +132,10 @@ async function handleImportMd() {
   input.click()
 }
 
+function openHelp() {
+  router.push('/dashboard/help/markdown')
+}
+
 onMounted(loadData)
 </script>
 
@@ -142,6 +147,9 @@ onMounted(loadData)
         <el-button :loading="importingMd" @click="handleImportMd">
           📄 导入 Markdown
         </el-button>
+        <el-tooltip content="查看 Markdown 导入说明" placement="top">
+          <el-button :icon="QuestionFilled" circle size="small" @click="openHelp" />
+        </el-tooltip>
         <el-button type="primary" @click="showCreateModal = true">+ 新建文章</el-button>
       </div>
     </div>
