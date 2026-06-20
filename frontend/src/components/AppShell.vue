@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { Notebook, List, Cpu, User } from '@element-plus/icons-vue'
+import { Notebook, List, Cpu, User, QuestionFilled } from '@element-plus/icons-vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -15,6 +15,7 @@ const navItems = computed(() => [
   { path: '/dashboard/articles', label: '文章', icon: Notebook },
   { path: '/dashboard/templates', label: '模板库', icon: List },
   { path: '/dashboard/ai-config', label: 'AI 助手', icon: Cpu },
+  { path: '/dashboard/help/markdown', label: '帮助', icon: QuestionFilled },
   ...(isAdmin.value ? [{ path: '/admin/users', label: '用户管理', icon: User }] : [])
 ])
 
