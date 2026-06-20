@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 interface UserItem {
   id: string
@@ -13,9 +14,11 @@ const users = ref<UserItem[]>([])
 const loading = ref(false)
 const error = ref('')
 const showModal = ref(false)
-const newUsername = ref('')
-const newPassword = ref('')
-const newRole = ref<'user' | 'admin'>('user')
+const form = ref({
+  username: '',
+  password: '',
+  role: 'user' as 'user' | 'admin'
+})
 const creating = ref(false)
 
 async function loadUsers() {
@@ -31,30 +34,42 @@ async function loadUsers() {
   }
 }
 
+function resetForm() {
+  form.value = { username: '', password: '', role: 'user' }
+}
+
 async function createUser() {
-  if (!newUsername.value || !newPassword.value) return
+  if (!form.value.username || !form.value.password) {
+    ElMessage.warning('请填写用户名和密码')
+    return
+  }
+  if (creating.value) return
   creating.value = true
   try {
-    await api.register(newUsername.value, newPassword.value, newRole.value)
+    await api.register(form.value.username, form.value.password, form.value.role)
     showModal.value = false
-    newUsername.value = ''
-    newPassword.value = ''
-    newRole.value = 'user'
+    resetForm()
+    ElMessage.success('创建成功')
     await loadUsers()
   } catch (e: any) {
-    alert('创建失败: ' + e.message)
+    ElMessage.error('创建失败: ' + e.message)
   } finally {
     creating.value = false
   }
 }
 
 async function deleteUser(id: string) {
-  if (!confirm('确定要删除该用户吗？')) return
+  try {
+    await ElMessageBox.confirm('确定要删除该用户吗？', '确认删除')
+  } catch {
+    return
+  }
   try {
     await api.deleteUser(id)
+    ElMessage.success('删除成功')
     await loadUsers()
   } catch (e: any) {
-    alert('删除失败: ' + e.message)
+    ElMessage.error('删除失败: ' + e.message)
   }
 }
 
@@ -65,76 +80,77 @@ onMounted(loadUsers)
   <div class="page">
     <div class="page-header">
       <h2>用户管理</h2>
-      <button class="btn-primary" @click="showModal = true">+ 新建用户</button>
+      <el-button type="primary" @click="showModal = true">+ 新建用户</el-button>
     </div>
-    <p v-if="loading" class="status">加载中...</p>
-    <p v-else-if="error" class="status error">{{ error }}</p>
-    <table v-else class="user-table">
-      <thead>
-        <tr><th>用户名</th><th>角色</th><th>创建时间</th><th>操作</th></tr>
-      </thead>
-      <tbody>
-        <tr v-for="u in users" :key="u.id">
-          <td>{{ u.username }}</td>
-          <td><span class="role-badge" :class="u.role">{{ u.role }}</span></td>
-          <td>{{ new Date(u.created_at).toLocaleString() }}</td>
-          <td><button class="btn-small danger" @click="deleteUser(u.id)">删除</button></td>
-        </tr>
-      </tbody>
-    </table>
 
-    <Teleport to="body">
-      <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
-        <div class="modal">
-          <h3>新建用户</h3>
-          <div class="form-group">
-            <label>用户名</label>
-            <input v-model="newUsername" type="text" placeholder="username" />
-          </div>
-          <div class="form-group">
-            <label>密码</label>
-            <input v-model="newPassword" type="password" placeholder="至少6位" />
-          </div>
-          <div class="form-group">
-            <label>角色</label>
-            <select v-model="newRole">
-              <option value="user">普通用户</option>
-              <option value="admin">管理员</option>
-            </select>
-          </div>
-          <div class="modal-actions">
-            <button class="btn-secondary" @click="showModal = false">取消</button>
-            <button class="btn-primary" :disabled="creating" @click="createUser">{{ creating ? '创建中...' : '创建' }}</button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      show-icon
+      :closable="false"
+      class="mb-4"
+    />
+
+    <el-table
+      v-loading="loading"
+      :data="users"
+      stripe
+      style="width: 100%"
+    >
+      <el-table-column prop="username" label="用户名" />
+      <el-table-column label="角色" width="120">
+        <template #default="{ row }">
+          <el-tag :type="row.role === 'admin' ? 'primary' : 'info'" size="small">
+            {{ row.role === 'admin' ? '管理员' : '普通用户' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="创建时间" width="200">
+        <template #default="{ row }">
+          {{ new Date(row.created_at).toLocaleString() }}
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="100">
+        <template #default="{ row }">
+          <el-button size="small" type="danger" plain @click="deleteUser(row.id)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <el-dialog
+      v-model="showModal"
+      title="新建用户"
+      width="400px"
+      @close="resetForm"
+    >
+      <el-form label-position="top">
+        <el-form-item label="用户名">
+          <el-input v-model="form.username" placeholder="username" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input v-model="form.password" type="password" placeholder="至少6位" show-password />
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-select v-model="form.role" style="width: 100%">
+            <el-option label="普通用户" value="user" />
+            <el-option label="管理员" value="admin" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showModal = false">取消</el-button>
+        <el-button type="primary" :loading="creating" @click="createUser">
+          {{ creating ? '创建中...' : '创建' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
-.page { max-width: 800px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 24px; border: 1px solid #e5e7eb; }
+.page { max-width: 800px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 24px; border: 1px solid var(--el-border-color-light); }
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.page-header h2 { font-size: 18px; font-weight: 600; color: #111827; }
-.btn-primary { padding: 8px 16px; font-size: 13px; font-weight: 500; color: #fff; background: #3b82f6; border: none; border-radius: 6px; cursor: pointer; }
-.btn-primary:hover { background: #2563eb; }
-.status { text-align: center; padding: 40px; color: #6b7280; }
-.error { color: #dc2626; }
-.user-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.user-table th, .user-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-.user-table th { font-weight: 600; color: #374151; background: #f9fafb; }
-.role-badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px; }
-.role-badge.admin { background: #dbeafe; color: #1e40af; }
-.role-badge.user { background: #f3f4f6; color: #4b5563; }
-.btn-small { padding: 5px 12px; font-size: 12px; font-weight: 500; border-radius: 5px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; }
-.btn-small.danger { color: #dc2626; border-color: #fecaca; }
-.btn-small.danger:hover { background: #fef2f2; }
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { width: 90%; max-width: 400px; background: #fff; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 14px; }
-.modal h3 { margin: 0 0 4px; font-size: 16px; }
-.form-group { display: flex; flex-direction: column; gap: 5px; }
-.form-group label { font-size: 13px; font-weight: 500; color: #374151; }
-.form-group input, .form-group select { padding: 9px 12px; font-size: 14px; border: 1px solid #d1d5db; border-radius: 8px; outline: none; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
-.btn-secondary { padding: 8px 16px; font-size: 13px; font-weight: 500; color: #4b5563; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; }
+.page-header h2 { font-size: 18px; font-weight: 600; color: var(--el-text-color-primary); margin: 0; }
+.mb-4 { margin-bottom: 16px; }
 </style>
