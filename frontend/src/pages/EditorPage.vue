@@ -178,6 +178,7 @@ async function handleSave() {
         author: articleMeta.value.author,
         summary: articleMeta.value.summary,
         cover_image: articleMeta.value.cover_image,
+        layout_id: articleMeta.value.layout_id || undefined,
         content: JSON.stringify(documentStore.document)
       })
     } else {

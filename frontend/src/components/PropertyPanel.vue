@@ -157,15 +157,50 @@
 
       <!-- 模块专用属性编辑器 -->
       <component :is="propertyEditor" />
+
+      <!-- 模板样式应用（仅文章模式） -->
+      <template v-if="isArticleMode && associatedTemplate?.document && templateModuleStyles">
+        <div class="property-section">
+          <div class="section-header">
+            <span class="template-section-title">
+              <el-tag size="small" type="success" effect="light" style="margin-right: 4px;">模板</el-tag>
+              {{ associatedTemplate?.name }}
+            </span>
+          </div>
+          <div class="template-style-card">
+            <div class="template-style-header">
+              <span class="template-module-type">{{ selectedModule?.type }} 模块样式</span>
+              <el-button size="small" type="primary" plain @click="applyTemplateStyle">
+                应用
+              </el-button>
+            </div>
+            <div class="template-style-tags">
+              <el-tag
+                v-for="(value, key) in visibleTemplateStyles"
+                :key="key"
+                size="small"
+                hit
+                style="margin: 2px;"
+              >
+                {{ key }}: {{ value }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, inject, ref } from 'vue'
 import { useDocumentStore } from '@/stores/document'
 import { moduleRegistry } from '@/registry/modules'
 import { storeToRefs } from 'pinia'
+import { ElMessage } from 'element-plus'
+import type { Layout } from '@/services/api'
+import type { Module } from '@/types/document'
+import type { Ref } from 'vue'
 
 const documentStore = useDocumentStore()
 const { selectedModule } = storeToRefs(documentStore)
@@ -251,6 +286,59 @@ function parseSpacing(val: string | undefined, fallback = '0'): number[] {
 
 const paddingVals = computed(() => parseSpacing(selectedModule.value?.styles.padding))
 const marginVals = computed(() => parseSpacing(selectedModule.value?.styles.margin, '0 0 16px 0'))
+
+const isArticleMode = inject<boolean>('isArticleMode', false)
+const associatedTemplate = inject<Ref<Layout | null>>('associatedTemplate', ref(null))
+
+const templateModuleStyles = computed(() => {
+  if (!isArticleMode || !associatedTemplate.value?.document || !selectedModule.value) return null
+
+  const templateDoc = associatedTemplate.value.document
+  const targetType = selectedModule.value.type
+
+  // Find module of same type in template
+  function findInTemplate(module: Module): Module | null {
+    if (module.type === targetType) return module
+    if (module.children) {
+      for (const child of module.children) {
+        const found = findInTemplate(child)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  const found = findInTemplate(templateDoc.root)
+  return found ? found.styles : null
+})
+
+// 只显示关键样式标签，避免信息过载
+const keyStyleKeys = ['backgroundColor', 'color', 'fontSize', 'fontWeight', 'textAlign', 'borderRadius', 'border']
+const visibleTemplateStyles = computed(() => {
+  const styles = templateModuleStyles.value
+  if (!styles) return null
+  const filtered: Record<string, string> = {}
+  for (const key of keyStyleKeys) {
+    if (styles[key]) {
+      filtered[key] = styles[key]
+    }
+  }
+  return Object.keys(filtered).length > 0 ? filtered : null
+})
+
+function applyTemplateStyle() {
+  if (!associatedTemplate.value?.document || !selectedModule.value) return
+
+  const moduleId = documentStore.selectedModuleId
+  if (!moduleId) return
+
+  const applied = documentStore.applyTemplateModuleStyles(associatedTemplate.value.document, moduleId)
+  if (applied) {
+    ElMessage.success('已应用模板样式')
+  } else {
+    ElMessage.info('当前模板中未找到同类型模块的样式')
+  }
+}
 </script>
 
 <style scoped>
@@ -269,4 +357,11 @@ const marginVals = computed(() => parseSpacing(selectedModule.value?.styles.marg
 .slider-label { font-size: 12px; color: var(--el-text-color-secondary); width: 16px; flex-shrink: 0; }
 .slider-row .el-slider { flex: 1; }
 .slider-value { font-size: 12px; color: var(--el-text-color-secondary); width: 40px; text-align: right; flex-shrink: 0; }
+.property-section { padding: 12px; border-top: 1px solid var(--el-border-color-light); }
+.section-header { margin-bottom: 8px; }
+.template-section-title { font-size: 13px; font-weight: 600; color: var(--el-text-color-primary); display: flex; align-items: center; }
+.template-style-card { background: var(--el-fill-color-light); border-radius: 8px; padding: 10px; }
+.template-style-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.template-module-type { font-size: 12px; font-weight: 600; color: var(--el-text-color-regular); }
+.template-style-tags { display: flex; flex-wrap: wrap; gap: 2px; }
 </style>
