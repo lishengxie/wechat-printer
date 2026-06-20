@@ -19,7 +19,7 @@ type Layout struct {
 type CreateLayoutRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
-	Content     string `json:"content" binding:"required"`
+	Content     string `json:"content"`
 	CSS         string `json:"css"`
 }
 
