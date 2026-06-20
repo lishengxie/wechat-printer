@@ -36,6 +36,11 @@ const router = createRouter({
           path: 'ai-config',
           name: 'AIConfig',
           component: () => import('@/pages/AIConfigPage.vue')
+        },
+        {
+          path: 'help/markdown',
+          name: 'HelpMarkdown',
+          component: () => import('@/pages/HelpMarkdownPage.vue')
         }
       ]
     },
