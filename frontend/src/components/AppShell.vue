@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { Notebook, List, Cpu, User } from '@element-plus/icons-vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -11,10 +12,10 @@ const username = computed(() => authStore.user?.username || '')
 const isAdmin = computed(() => authStore.isAdmin)
 
 const navItems = computed(() => [
-  { path: '/dashboard/articles', label: '文章', icon: 'Notebook' },
-  { path: '/dashboard/templates', label: '模板库', icon: 'List' },
-  { path: '/dashboard/ai-config', label: 'AI 助手', icon: 'Cpu' },
-  ...(isAdmin.value ? [{ path: '/admin/users', label: '用户管理', icon: 'User' }] : [])
+  { path: '/dashboard/articles', label: '文章', icon: Notebook },
+  { path: '/dashboard/templates', label: '模板库', icon: List },
+  { path: '/dashboard/ai-config', label: 'AI 助手', icon: Cpu },
+  ...(isAdmin.value ? [{ path: '/admin/users', label: '用户管理', icon: User }] : [])
 ])
 
 const defaultActive = computed(() => route.path)
@@ -98,5 +99,5 @@ function logout() {
   white-space: nowrap;
   max-width: 80px;
 }
-.shell-content { flex: 1; overflow: auto; background: #f5f7fa; padding: 24px; }
+.shell-content { flex: 1; overflow: auto; background: var(--el-bg-color-page); padding: 24px; }
 </style>
