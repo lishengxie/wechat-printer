@@ -123,7 +123,19 @@ function convertMarkedTokens(tokens: Tokens.Generic[]): Module[] {
   for (const token of tokens) {
     switch (token.type) {
       case 'paragraph': {
-        const html = marked.parseInline((token as Tokens.Paragraph).text) as string
+        const pToken = token as Tokens.Paragraph
+        const inlineTokens = pToken.tokens || []
+        // If the paragraph is just a single image, emit a dedicated image module
+        if (inlineTokens.length === 1 && inlineTokens[0].type === 'image') {
+          const imgToken = inlineTokens[0] as Tokens.Image
+          const mod = createModule('image')
+          mod.props.src = imgToken.href || ''
+          mod.props.alt = imgToken.text || ''
+          if (imgToken.title) mod.props.caption = imgToken.title
+          modules.push(mod)
+          break
+        }
+        const html = marked.parseInline(pToken.text) as string
         const mod = createModule('text')
         mod.props.content = html
         modules.push(mod)
