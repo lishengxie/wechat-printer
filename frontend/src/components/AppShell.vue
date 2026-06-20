@@ -32,28 +32,29 @@ function logout() {
 
 <template>
   <div class="shell">
-    <el-menu
-      :default-active="defaultActive"
-      class="sidebar"
-      @select="handleMenuSelect"
-    >
+    <div class="sidebar">
       <div class="sidebar-header">
         <span class="logo">📰</span>
         <span class="logo-text">公众号编辑器</span>
       </div>
-      <el-menu-item
-        v-for="item in navItems"
-        :key="item.path"
-        :index="item.path"
+      <el-menu
+        :default-active="defaultActive"
+        @select="handleMenuSelect"
       >
-        <el-icon><component :is="item.icon" /></el-icon>
-        <span>{{ item.label }}</span>
-      </el-menu-item>
+        <el-menu-item
+          v-for="item in navItems"
+          :key="item.path"
+          :index="item.path"
+        >
+          <el-icon><component :is="item.icon" /></el-icon>
+          <span>{{ item.label }}</span>
+        </el-menu-item>
+      </el-menu>
       <div class="sidebar-footer">
         <span class="user-badge">{{ username }}</span>
         <el-button size="small" type="danger" plain @click="logout">退出</el-button>
       </div>
-    </el-menu>
+    </div>
     <main class="shell-content">
       <router-view />
     </main>
@@ -65,9 +66,11 @@ function logout() {
 .sidebar {
   width: 200px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
-  overflow-y: auto;
   border-right: 1px solid var(--el-border-color-light);
+  background: var(--el-bg-color);
 }
 .sidebar-header {
   display: flex;
@@ -78,10 +81,12 @@ function logout() {
 }
 .logo { font-size: 22px; }
 .logo-text { font-size: 14px; font-weight: 600; color: var(--el-text-color-primary); }
+.sidebar .el-menu {
+  flex: 1;
+  overflow-y: auto;
+  border-right: none;
+}
 .sidebar-footer {
-  position: absolute;
-  bottom: 0;
-  width: 200px;
   display: flex;
   align-items: center;
   gap: 8px;
