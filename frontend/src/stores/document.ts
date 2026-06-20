@@ -68,9 +68,9 @@ export const useDocumentStore = defineStore('document', () => {
     selectedModuleId.value = null
   }
 
-  // 加载测试数据
-  function loadTestData() {
-    const testDoc = createEmptyDocument('【深度评测】2024年度旗舰产品发布全解析')
+  // 示例文章工厂：产品评测
+  function getProductReviewExample(): Document {
+    const doc = createEmptyDocument('【深度评测】2024年度旗舰产品发布全解析')
 
     // 1. 封面标题
     const titleModule = createModule('text')
@@ -323,7 +323,7 @@ export const useDocumentStore = defineStore('document', () => {
     }
 
     // 将所有模块添加到文档
-    testDoc.root.children = [
+    doc.root.children = [
       titleModule,
       subtitleModule,
       heroImage,
@@ -345,12 +345,25 @@ export const useDocumentStore = defineStore('document', () => {
       footerModule
     ]
 
-    document.value = testDoc
-    history.value = []
-    historyIndex.value = -1
-    selectedModuleId.value = null
+    return doc
+  }
 
-    console.log('测试数据加载完成！共加载', testDoc.root.children.length, '个模块')
+  // 加载测试数据（保留作为快捷方式）
+  function loadTestData() {
+    const doc = getProductReviewExample()
+    setDocument(doc)
+    console.log('测试数据加载完成！共加载', doc.root.children.length, '个模块')
+  }
+
+  // 加载示例文章（通过 ID 选择）
+  function loadExampleArticle(exampleId: string) {
+    switch (exampleId) {
+      case 'product-review':
+        setDocument(getProductReviewExample())
+        break
+      default:
+        setDocument(createEmptyDocument())
+    }
   }
 
   function selectModule(id: string | null) {
@@ -556,6 +569,61 @@ export const useDocumentStore = defineStore('document', () => {
     return historyIndex.value < history.value.length - 1
   }
 
+  // 应用模板：从模板文档合并 styles 到当前文档
+  function applyTemplateFromDocument(templateDocument: Document) {
+    saveToHistory()
+    const newDoc = JSON.parse(JSON.stringify(document.value))
+
+    // Build moduleType -> styles map from template
+    const stylesByType: Record<string, ModuleStyles> = {}
+    function collect(module: Module) {
+      if (module.styles && Object.keys(module.styles).length > 0) {
+        stylesByType[module.type] = { ...module.styles }
+      }
+      if (module.children) {
+        module.children.forEach(collect)
+      }
+    }
+    collect(templateDocument.root)
+
+    // Apply to current document
+    function traverse(module: Module) {
+      const moduleStyles = stylesByType[module.type]
+      if (moduleStyles) {
+        module.styles = { ...module.styles, ...moduleStyles }
+      }
+      if (module.children) {
+        module.children.forEach(traverse)
+      }
+    }
+    traverse(newDoc.root)
+
+    newDoc.updatedAt = new Date().toISOString()
+    document.value = newDoc
+  }
+
+  // 应用模板模块样式：将模板中同类型模块的 styles 合并到指定模块
+  function applyTemplateModuleStyles(templateDocument: Document, targetModuleId: string) {
+    const targetModule = findModuleById(document.value.root, targetModuleId)
+    if (!targetModule) return
+
+    // Find the matching module in template by type
+    let templateModule: Module | null = null
+    function findTemplateModule(module: Module) {
+      if (module.type === targetModule.type) {
+        templateModule = module
+      }
+      if (module.children && !templateModule) {
+        module.children.forEach(findTemplateModule)
+      }
+    }
+    findTemplateModule(templateDocument.root)
+
+    if (templateModule && templateModule.styles) {
+      updateModuleStyles(targetModuleId, templateModule.styles)
+    }
+  }
+
   return {
     // State
     document,
@@ -578,6 +646,10 @@ export const useDocumentStore = defineStore('document', () => {
     canUndo,
     canRedo,
     findModuleById,
-    loadTestData
+    loadTestData,
+    loadExampleArticle,
+    getProductReviewExample,
+    applyTemplateFromDocument,
+    applyTemplateModuleStyles
   }
 })
