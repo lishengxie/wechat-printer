@@ -219,12 +219,7 @@ function updateStyle(key: string, value: string | undefined) {
 
 function updatePadding(side: string, val: number) {
   if (!selectedModule.value) return
-  const cur = selectedModule.value.styles.padding || '0'
-  const parts = cur.split(/\s+/).map(v => parseInt(v) || 0)
-  const [t = 0, r = t, b = t, l = t] = parts.length === 1 ? [parts[0], parts[0], parts[0], parts[0]]
-    : parts.length === 2 ? [parts[0], parts[1], parts[0], parts[1]]
-    : parts.length === 3 ? [parts[0], parts[1], parts[2], parts[1]]
-    : [parts[0], parts[1], parts[2], parts[3]]
+  const [t, r, b, l] = parseSpacing(selectedModule.value.styles.padding)
   const map: Record<string, string> = {
     top: `${val}px ${r}px ${b}px ${l}px`,
     right: `${t}px ${val}px ${b}px ${l}px`,
@@ -236,12 +231,7 @@ function updatePadding(side: string, val: number) {
 
 function updateMargin(side: string, val: number) {
   if (!selectedModule.value) return
-  const cur = selectedModule.value.styles.margin || '0 0 16px 0'
-  const parts = cur.split(/\s+/).map(v => parseInt(v) || 0)
-  const [t = 0, r = t, b = t, l = t] = parts.length === 1 ? [parts[0], parts[0], parts[0], parts[0]]
-    : parts.length === 2 ? [parts[0], parts[1], parts[0], parts[1]]
-    : parts.length === 3 ? [parts[0], parts[1], parts[2], parts[1]]
-    : [parts[0], parts[1], parts[2], parts[3]]
+  const [t, r, b, l] = parseSpacing(selectedModule.value.styles.margin, '0 0 16px 0')
   const map: Record<string, string> = {
     top: `${val}px ${r}px ${b}px ${l}px`,
     right: `${t}px ${val}px ${b}px ${l}px`,
