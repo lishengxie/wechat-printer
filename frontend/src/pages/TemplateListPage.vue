@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import type { Layout } from '@/services/api'
 import { createEmptyDocument } from '@/types/document'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const layouts = ref<Layout[]>([])
@@ -27,12 +28,17 @@ function editLayout(id: string) {
 }
 
 async function deleteLayout(id: string) {
-  if (!confirm('确定要删除这个模板吗？')) return
+  try {
+    await ElMessageBox.confirm('确定要删除这个模板吗？', '确认删除')
+  } catch {
+    return
+  }
   try {
     await api.deleteLayout(id)
+    ElMessage.success('删除成功')
     await loadLayouts()
   } catch (e: any) {
-    alert('删除失败: ' + e.message)
+    ElMessage.error('删除失败: ' + (e.message || ''))
   }
 }
 
@@ -44,7 +50,7 @@ async function createLayout() {
     })
     router.push(`/editor/template/${layout.id}`)
   } catch (e: any) {
-    alert('创建失败: ' + e.message)
+    ElMessage.error('创建失败: ' + e.message)
   }
 }
 
@@ -57,7 +63,7 @@ async function createArticleFromTemplate(layoutId: string) {
     })
     router.push(`/editor/article/${article.id}`)
   } catch (e: any) {
-    alert('创建文章失败: ' + e.message)
+    ElMessage.error('创建文章失败: ' + e.message)
   }
 }
 
@@ -68,26 +74,44 @@ onMounted(loadLayouts)
   <div class="page">
     <div class="page-header">
       <h2>排版模板</h2>
-      <button class="btn-primary" @click="createLayout">+ 新建模板</button>
+      <el-button type="primary" @click="createLayout">+ 新建模板</el-button>
     </div>
-    <p v-if="loading" class="status">加载中...</p>
-    <p v-else-if="error" class="status error">{{ error }}</p>
-    <div v-else-if="layouts.length === 0" class="empty">
-      <p>还没有模板，点击右上角新建</p>
-    </div>
-    <div v-else class="card-grid">
-      <div v-for="layout in layouts" :key="layout.id" class="card">
-        <div class="card-title-row">
-          <h3 class="card-title">{{ layout.name }}</h3>
-          <span v-if="layout.isPreset" class="preset-badge">预设</span>
-        </div>
-        <p v-if="layout.description" class="card-desc">{{ layout.description }}</p>
-        <p class="card-meta">{{ new Date(layout.updatedAt).toLocaleString() }}</p>
-        <div class="card-actions">
-          <button class="btn-small primary" @click="createArticleFromTemplate(layout.id)">用此模板创建文章</button>
-          <button class="btn-small" @click="editLayout(layout.id)">编辑模板</button>
-          <button v-if="!layout.isPreset" class="btn-small danger" @click="deleteLayout(layout.id)">删除</button>
-        </div>
+
+    <div v-loading="loading" class="loading-wrap">
+      <el-alert
+        v-if="error"
+        :title="error"
+        type="error"
+        show-icon
+        :closable="false"
+      />
+      <el-empty
+        v-else-if="!loading && layouts.length === 0"
+        description="还没有模板"
+      >
+        <el-button type="primary" @click="createLayout">新建第一个模板</el-button>
+      </el-empty>
+      <div v-else class="card-grid">
+        <el-card
+          v-for="layout in layouts"
+          :key="layout.id"
+          shadow="hover"
+          class="layout-card"
+        >
+          <div class="card-title-row">
+            <h3 class="card-title">{{ layout.name }}</h3>
+            <el-tag v-if="layout.isPreset" type="warning" size="small" effect="plain">预设</el-tag>
+          </div>
+          <p v-if="layout.description" class="card-desc">{{ layout.description }}</p>
+          <p class="card-meta">{{ new Date(layout.updatedAt).toLocaleString() }}</p>
+          <template #footer>
+            <div class="card-actions">
+              <el-button size="small" type="primary" @click="createArticleFromTemplate(layout.id)">用此模板创建文章</el-button>
+              <el-button size="small" @click="editLayout(layout.id)">编辑模板</el-button>
+              <el-button v-if="!layout.isPreset" size="small" type="danger" plain @click="deleteLayout(layout.id)">删除</el-button>
+            </div>
+          </template>
+        </el-card>
       </div>
     </div>
   </div>
@@ -96,24 +120,13 @@ onMounted(loadLayouts)
 <style scoped>
 .page { max-width: 1000px; margin: 0 auto; }
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-.page-header h2 { font-size: 20px; font-weight: 600; color: #111827; }
-.btn-primary { padding: 8px 16px; font-size: 13px; font-weight: 500; color: #fff; background: #3b82f6; border: none; border-radius: 6px; cursor: pointer; }
-.btn-primary:hover { background: #2563eb; }
-.status { text-align: center; color: #6b7280; padding: 40px; }
-.error { color: #dc2626; }
-.empty { text-align: center; padding: 60px; color: #9ca3af; }
+.page-header h2 { font-size: 20px; font-weight: 600; color: var(--el-text-color-primary); margin: 0; }
+.loading-wrap { min-height: 200px; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-.card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 8px; }
-.card-title { font-size: 15px; font-weight: 600; color: #111827; margin: 0; }
+.layout-card { cursor: default; }
 .card-title-row { display: flex; align-items: center; gap: 8px; }
-.preset-badge { font-size: 11px; font-weight: 600; color: #8b5cf6; background: #ede9fe; padding: 2px 8px; border-radius: 4px; line-height: 1.5; }
-.card-desc { font-size: 13px; color: #6b7280; line-height: 1.4; }
-.card-meta { font-size: 12px; color: #9ca3af; }
-.card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; flex-wrap: wrap; }
-.btn-small { padding: 5px 12px; font-size: 12px; font-weight: 500; border-radius: 5px; border: 1px solid #d1d5db; background: #fff; color: #374151; cursor: pointer; }
-.btn-small:hover { background: #f9fafb; }
-.btn-small.primary { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
-.btn-small.primary:hover { background: #bfdbfe; }
-.btn-small.danger { color: #dc2626; border-color: #fecaca; }
-.btn-small.danger:hover { background: #fef2f2; }
+.card-title { font-size: 15px; font-weight: 600; margin: 0; }
+.card-desc { font-size: 13px; color: var(--el-text-color-secondary); line-height: 1.4; margin-top: 8px; }
+.card-meta { font-size: 12px; color: var(--el-text-color-placeholder); margin-top: 8px; }
+.card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 </style>
