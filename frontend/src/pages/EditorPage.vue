@@ -295,8 +295,8 @@ function goBack() {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: #f3f4f6;
-  color: #1f2937;
+  background-color: var(--el-bg-color-page);
+  color: var(--el-text-color-primary);
 }
 
 .app-container {
@@ -313,8 +313,8 @@ body {
   justify-content: space-between;
   height: 56px;
   padding: 0 20px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -337,7 +337,7 @@ body {
 .logo-text {
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: var(--el-text-color-primary);
 }
 
 .title-input-wrap {
@@ -375,8 +375,8 @@ body {
 /* 左侧边栏 - 模块库 */
 .sidebar-left {
   width: 280px;
-  background-color: #ffffff;
-  border-right: 1px solid #e5e7eb;
+  background-color: var(--el-bg-color);
+  border-right: 1px solid var(--el-border-color-light);
   overflow-y: auto;
   flex-shrink: 0;
 }
@@ -390,8 +390,8 @@ body {
 /* 右侧边栏 - 属性面板 */
 .sidebar-right {
   width: 300px;
-  background-color: #ffffff;
-  border-left: 1px solid #e5e7eb;
+  background-color: var(--el-bg-color);
+  border-left: 1px solid var(--el-border-color-light);
   overflow-y: auto;
   flex-shrink: 0;
 }
@@ -400,7 +400,7 @@ body {
 .preview-area {
   flex: 1;
   overflow: auto;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  background: var(--el-bg-color-page);
 }
 
 .html-preview {
@@ -410,9 +410,9 @@ body {
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 12px;
   line-height: 1.6;
-  color: #374151;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  color: var(--el-text-color-regular);
+  background-color: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   resize: none;
   outline: none;
