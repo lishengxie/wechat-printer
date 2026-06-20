@@ -1,4 +1,5 @@
-import type { Document } from '@/types/document'
+import type { Document, Module, ModuleStyles } from '@/types/document'
+import { createModule, createEmptyDocument } from '@/types/document'
 import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 
@@ -18,7 +19,7 @@ export interface Layout {
   id: string
   name: string
   description?: string
-  document: Document
+  document: Document | null
   isPreset: boolean
   createdAt: string
   updatedAt: string
@@ -41,7 +42,7 @@ export interface Article {
 export interface LayoutCreateInput {
   name: string
   description?: string
-  document: Document
+  document?: Document
 }
 
 export interface LayoutUpdateInput {
@@ -147,24 +148,30 @@ export async function uploadImage(file: File): Promise<UploadedImage> {
   return json.data as UploadedImage
 }
 
+function convertStyleDefsToDocument(styles: Record<string, ModuleStyles>): Document {
+  const doc = createEmptyDocument('模板')
+  for (const [type, style] of Object.entries(styles)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mod = createModule(type as any) as Module
+    mod.styles = style
+    doc.root.children!.push(mod)
+  }
+  return doc
+}
+
 function backendToFrontend(backend: BackendLayout): Layout {
-  let document: Document
+  let document: Document | null = null
   try {
-    document = JSON.parse(backend.content)
-  } catch {
-    document = {
-      id: backend.id,
-      title: backend.name,
-      createdAt: backend.created_at,
-      updatedAt: backend.updated_at,
-      root: {
-        id: 'root',
-        type: 'container' as const,
-        props: { layout: 'single' as const },
-        children: [],
-        styles: {}
-      }
+    const parsed = JSON.parse(backend.content)
+    // Detect old format (keyed by module type strings) vs new format (has 'root')
+    if (parsed && parsed.root) {
+      document = parsed as Document
+    } else if (parsed && typeof parsed === 'object') {
+      // Old StyleDefinitions format — convert
+      document = convertStyleDefsToDocument(parsed as Record<string, ModuleStyles>)
     }
+  } catch {
+    // Invalid JSON, leave as null
   }
   return {
     id: backend.id,
@@ -218,7 +225,7 @@ export const api = {
       body: JSON.stringify({
         name: data.name,
         description: data.description || '',
-        content: JSON.stringify(data.document),
+        content: data.document ? JSON.stringify(data.document) : '',
         css: ''
       })
     })
