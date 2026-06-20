@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
-import { useDocumentStore } from '@/stores/document'
 import { apiAI } from '@/services/api'
 import type { Module } from '@/types/document'
 
@@ -12,8 +11,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'toggle'): void
 }>()
-
-const documentStore = useDocumentStore()
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -29,31 +26,6 @@ const error = ref('')
 const messagesRef = ref<HTMLElement | null>(null)
 
 const mode = ref<'style' | 'full'>('full')
-
-function moduleLabel(mod: Module | null): string {
-  if (!mod) return ''
-  const labels: Record<string, string> = {
-    header: '页首', footer: '页尾', text: '文本',
-    image: '图片', button: '按钮', divider: '分割线',
-    container: '容器', toc: '目录', heading: '章节标题'
-  }
-  const base = labels[mod.type] || mod.type
-  const p = mod.props as any
-  if (mod.type === 'text' && p.content) {
-    const preview = p.content.replace(/<[^>]+>/g, '').trim().substring(0, 14)
-    return preview ? `${preview}` : base
-  }
-  if (mod.type === 'header' && p.title) return p.title.substring(0, 14)
-  if (mod.type === 'button' && p.text) return p.text
-  if (mod.type === 'footer' && p.text) return p.text.substring(0, 14)
-  if (mod.type === 'image' && p.src) {
-    const fn = p.src.split('/').pop() || ''
-    return fn.substring(0, 14) || base
-  }
-  if (mod.type === 'toc' && p.title) return p.title
-  if (mod.type === 'heading' && p.text) return p.text.substring(0, 14)
-  return base
-}
 
 // Reset messages when selected module changes
 watch(() => props.selectedModule?.id, () => {
@@ -107,26 +79,6 @@ function scrollToBottom() {
     messagesRef.value.scrollTop = messagesRef.value.scrollHeight
   }
 }
-
-function applyChanges(suggestedModule: Module) {
-  if (!suggestedModule) return
-  const selected = props.selectedModule
-  if (!selected) return
-  // 样式模式下强制保持模块类型不变
-  const merged = {
-    ...suggestedModule,
-    id: selected.id,
-    ...(mode.value === 'style' ? { type: selected.type } : {})
-  }
-  documentStore.replaceModule(merged)
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    sendMessage()
-  }
-}
 </script>
 
 <template>
@@ -167,7 +119,7 @@ function handleKeydown(e: KeyboardEvent) {
         type="textarea"
         :rows="2"
         placeholder="描述你想要的排版效果..."
-        @keyup.enter.prevent="sendMessage"
+        @keydown.enter.prevent="sendMessage"
       />
       <el-button type="primary" :loading="loading" @click="sendMessage" class="send-btn">
         发送
