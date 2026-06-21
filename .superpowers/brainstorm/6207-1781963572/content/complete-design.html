@@ -1,0 +1,62 @@
+<h2>完整设计总览</h2>
+<p class="subtitle">模板系统改造 — 数据模型 + 创建流程 + 编辑器交互</p>
+
+<div class="section" style="text-align: left;">
+  <h3>1. 数据模型 ✓</h3>
+  <div style="background: #f0fdf4; padding: 12px; border-radius: 8px; font-size: 13px;">
+    <strong>Layout.content</strong> → 从 <code>StyleDefinitions</code> 改为完整 <code>Document</code> JSON<br>
+    <strong>Article.layout_id</strong> → 关联当前模板，已有此字段无变动<br>
+    <strong>示例文章</strong> → 前端预设 Document，类似 <code>loadTestData()</code> 扩展为多篇
+  </div>
+</div>
+
+<div class="section" style="text-align: left;">
+  <h3>2. 文章创建流程 ✓</h3>
+  <div style="background: #f0fdf4; padding: 12px; border-radius: 8px; font-size: 13px;">
+    弹窗包含：标题 + 示例文章（单选标签）+ 模板（可选）+ 创建并编辑<br>
+    数据流：示例文章 Document → 按 type 匹配模板模块 → 合并 styles（不合并 props）
+  </div>
+</div>
+
+<div class="section" style="text-align: left;">
+  <h3>3. 编辑器按模块挑样式 ✓</h3>
+  <div style="background: #f0fdf4; padding: 12px; border-radius: 8px; font-size: 13px;">
+    属性面板底部新增"模板"分区 → 显示关联模板中同类型模块的样式摘要 → 点击"应用"只合并 styles
+  </div>
+</div>
+
+<div class="section" style="text-align: left;">
+  <h3>4. 工具栏改动</h3>
+  <div style="background: #fffbeb; padding: 12px; border-radius: 8px; font-size: 13px;">
+    <strong>"🎨 切换模板"</strong> → 改为关联模板选择（仅改变 <code>layout_id</code>，<strong>不</strong>自动应用样式）<br>
+    <strong>"📋 加载示例"</strong> → 移除该按钮<br><br>
+    <span style="color: #666;">关联模板后，用户到属性面板中按模块逐个应用样式。</span>
+  </div>
+</div>
+
+<div class="section" style="text-align: left;">
+  <h3>5. 模板保存逻辑</h3>
+  <div style="background: #fffbeb; padding: 12px; border-radius: 8px; font-size: 13px;">
+    模板模式保存：直接存 <code>JSON.stringify(documentStore.document)</code> 到 <code>layout.content</code><br>
+    不再需要现在那种"遍历收集 per-type styles"的逻辑 — 更简单。
+  </div>
+</div>
+
+<div class="section" style="text-align: left;">
+  <h3>6. 涉及改动文件清单</h3>
+  <div style="background: #f0f9ff; padding: 12px; border-radius: 8px; font-size: 13px; font-family: monospace; line-height: 1.8;">
+    <strong>前端</strong><br>
+    ┣ services/api.ts — Layout 接口 styles→document<br>
+    ┣ stores/document.ts — applyTemplateStyles 适配新模型 + 增加 per-module 方法<br>
+    ┣ pages/ArticleListPage.vue — 创建弹窗增加示例文章选择<br>
+    ┣ pages/EditorPage.vue — 切换模板逻辑 + 移除加载示例 + 跟踪 layout_id<br>
+    ┗ components/PropertyPanel.vue — 新增"模板"分区<br><br>
+    <strong>后端</strong><br>
+    ┣ model/layout.go — CreateLayoutRequest.Content 去掉 binding:"required"（模板创建时无文档）<br>
+    ┗ （其余无改动 — content 字段本身就是 string，只是存的内容格式变了）
+  </div>
+</div>
+
+<div class="section" style="margin-top: 16px;">
+  <span style="background: #dbeafe; color: #2563eb; padding: 2px 10px; border-radius: 12px; font-size: 13px;">共约 5 个前端文件 + 1 个后端文件改动</span>
+</div>

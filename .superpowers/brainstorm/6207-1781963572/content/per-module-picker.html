@@ -1,0 +1,92 @@
+<h2>编辑器中按模块应用模板样式</h2>
+<p class="subtitle">在属性面板中增加"从模板应用样式"功能</p>
+
+<div class="split">
+  <!-- 左侧：编辑器整体布局 -->
+  <div class="mockup">
+    <div class="mockup-header">编辑器布局</div>
+    <div class="mockup-body" style="padding: 0;">
+      <!-- 模拟三栏布局 -->
+      <div style="display: flex; height: 300px;">
+        <!-- 左栏 模块库 -->
+        <div style="width: 100px; background: #f9fafb; padding: 8px; border-right: 1px solid #e5e7eb; font-size: 11px; color: #666;">
+          <div style="font-weight: 600; margin-bottom: 8px;">模块库</div>
+          <div class="placeholder" style="height: 24px; margin-bottom: 4px;">Text</div>
+          <div class="placeholder" style="height: 24px; margin-bottom: 4px;">Image</div>
+          <div class="placeholder" style="height: 24px; margin-bottom: 4px;">Heading</div>
+          <div class="placeholder" style="height: 24px; margin-bottom: 4px;">Button</div>
+        </div>
+        <!-- 中栏 画布 -->
+        <div style="flex: 1; padding: 12px; overflow: auto; background: #f3f4f6;">
+          <div style="background: white; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; font-size: 12px; border: 2px solid #3b82f6;">
+            <strong>H</strong> 文章标题模块
+            <span style="float: right; font-size: 10px; color: #3b82f6;">已选中</span>
+          </div>
+          <div style="background: white; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; font-size: 12px;">
+            <strong>T</strong> 正文段落...
+          </div>
+          <div style="background: white; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; font-size: 12px;">
+            <strong>IMG</strong> 图片
+          </div>
+          <div style="background: white; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; font-size: 12px;">
+            <strong>T</strong> 更多正文...
+          </div>
+        </div>
+        <!-- 右栏 属性面板 -->
+        <div style="width: 180px; background: white; padding: 8px; border-left: 1px solid #e5e7eb; font-size: 11px; overflow: auto;">
+          <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">属性面板</div>
+
+          <!-- 常规属性 -->
+          <div style="color: #666; margin-bottom: 4px;">字体大小</div>
+          <div class="placeholder" style="height: 20px; margin-bottom: 8px;"></div>
+          <div style="color: #666; margin-bottom: 4px;">颜色</div>
+          <div class="placeholder" style="height: 20px; margin-bottom: 8px;"></div>
+          <div style="color: #666; margin-bottom: 4px;">对齐</div>
+          <div class="placeholder" style="height: 20px; margin-bottom: 12px;"></div>
+
+          <!-- 从模板应用 -->
+          <div style="border-top: 1px solid #e5e7eb; padding-top: 12px;">
+            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 8px;">
+              <span style="background: #dbeafe; color: #2563eb; border-radius: 10px; padding: 1px 8px; font-size: 10px;">模板</span>
+              <span style="font-weight: 600; color: #374151;">从模板应用</span>
+            </div>
+
+            <!-- 当前模板信息 -->
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px; margin-bottom: 8px;">
+              <div style="font-size: 11px; color: #166534; margin-bottom: 4px;">
+                <strong>简约风格</strong> <span style="background: #dcfce7; border-radius: 4px; padding: 0 4px; font-size: 10px;">当前模板</span>
+              </div>
+              <div style="font-size: 10px; color: #16a34a;">该模块对应模板中的:</div>
+            </div>
+
+            <!-- 模板中的 header 模块预览 -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; cursor: pointer;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-weight: 600; font-size: 11px; color: #374151;">Header 模块</span>
+                <span style="font-size: 10px; color: #2563eb; font-weight: 600;">应用</span>
+              </div>
+              <div style="font-size: 10px; color: #666; display: flex; flex-wrap: wrap; gap: 4px;">
+                <span style="background: #e5e7eb; padding: 1px 6px; border-radius: 3px;">bg: #f8fafc</span>
+                <span style="background: #e5e7eb; padding: 1px 6px; border-radius: 3px;">align: center</span>
+                <span style="background: #e5e7eb; padding: 1px 6px; border-radius: 3px;">p: 24px 16px</span>
+                <span style="background: #e5e7eb; padding: 1px 6px; border-radius: 3px;">rounded: 8px</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 20px;">
+  <h3>交互流程</h3>
+  <div style="text-align: left; font-size: 14px; line-height: 1.8; background: #f8fafc; padding: 16px; border-radius: 8px;">
+    <strong>①</strong> 选中画布上的某个模块（如 Header）<br>
+    <strong>②</strong> 右侧属性面板底部出现"模板"分区<br>
+    <strong>③</strong> 显示关联模板内同类型模块的样式摘要<br>
+    <strong>④</strong> 点击"应用" → 调用 <code>replaceModule({ id, styles: templateModule.styles })</code><br>
+    <strong>⑤</strong> 选择"切换模板"可更换当前文章的关联模板<br><br>
+    <span style="color: #666;">由于每种类型在模板中只有一个实例，直接展示样式预览 + 一个应用按钮即可，无需列表选择。</span>
+  </div>
+</div>
