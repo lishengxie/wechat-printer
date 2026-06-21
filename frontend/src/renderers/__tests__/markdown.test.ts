@@ -27,4 +27,10 @@ describe('renderMarkdown', () => {
     const html = renderMarkdown(createMockModule({ props: { content: '' } }))
     expect(html).toBeTruthy()
   })
+
+  it('should render code blocks with overridden style inside pre', () => {
+    const html = renderMarkdown(createMockModule({ props: { content: '```js\nconst x = 1;\n```' } }))
+    expect(html).toContain('<pre style=')
+    expect(html).toContain('background:none;padding:0;color:inherit')
+  })
 })

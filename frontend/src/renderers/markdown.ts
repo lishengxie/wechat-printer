@@ -13,7 +13,8 @@ function styleMarkdownHtml(raw: string): string {
   result = result.replace(/<h3>/g, '<h3 style="margin:12px 0 6px 0;font-weight:bold;color:#111827;font-size:1.2em">')
   result = result.replace(/<pre>/g, '<pre style="background:#f3f4f6;border-radius:6px;padding:12px;overflow-x:auto;margin:8px 0">')
   result = result.replace(/<code>/g, '<code style="background:#f3f4f6;border-radius:4px;padding:2px 6px;font-size:0.9em;color:#dc2626">')
-  result = result.replace(/<pre><code style="([^"]+)">/g, '<pre style="background:#f3f4f6;border-radius:6px;padding:12px;overflow-x:auto;margin:8px 0"><code style="$1;background:none;padding:0;color:inherit">')
+  // Override <code> style when inside <pre> (code blocks) - suppress background/padding/color
+  result = result.replace(/(<pre[^>]*>)<code[^>]*>/g, '$1<code style="background:none;padding:0;color:inherit">')
   result = result.replace(/<blockquote>/g, '<blockquote style="border-left:4px solid #3b82f6;margin:8px 0;padding:4px 16px;color:#4b5563;font-style:italic">')
   result = result.replace(/<table>/g, '<table style="border-collapse:collapse;width:100%;margin:8px 0">')
   result = result.replace(/<th>/g, '<th style="border:1px solid #d1d5db;padding:6px 10px;text-align:left;font-size:14px;background:#f9fafb;font-weight:600">')
