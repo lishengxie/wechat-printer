@@ -19,6 +19,11 @@ const isPreviewMode = inject('isPreviewMode', ref(false))
 const isHovered = ref(false)
 const isDragging = ref(false)
 
+// 模块背景色：有设置则使用，否则默认白色（编辑器中可见）
+const moduleBgStyle = computed(() => ({
+  backgroundColor: props.module.styles?.backgroundColor || 'transparent'
+}))
+
 // 是否被选中
 const isSelected = computed(() => documentStore.selectedModuleId === props.module.id)
 
@@ -67,6 +72,7 @@ function handleMouseLeave() {
 <template>
   <div
     class="module-item"
+    :style="moduleBgStyle"
     :class="{
       'is-selected': isSelected && !isPreviewMode,
       'is-hovered': isHovered && !isPreviewMode,
@@ -82,7 +88,10 @@ function handleMouseLeave() {
 
     <!-- 操作工具栏（仅选中时显示） -->
     <div v-if="isSelected && !isPreviewMode" class="toolbar">
-      <button class="btn-delete" @click.stop="handleDelete" title="删除模块">
+      <button class="btn-copy" @click.stop="documentStore.duplicateModule(module.id)" title="复制模块 (Ctrl+D)">
+        <span class="toolbar-icon">⧉</span>
+      </button>
+      <button class="btn-delete" @click.stop="handleDelete" title="删除模块 (Delete)">
         ✕
       </button>
       <div
@@ -106,16 +115,21 @@ function handleMouseLeave() {
 <style scoped>
 .module-item {
   position: relative;
-  padding: 12px;
-  margin: 4px 0;
   border: 1px solid #ebeef5;
   border-radius: 8px;
-  background: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
   min-height: 40px;
   z-index: 10;
   pointer-events: auto;
+  outline: none;
+}
+
+.module-item:focus,
+.module-item:focus-visible,
+.module-item *:focus,
+.module-item *:focus-visible {
+  outline: none;
 }
 
 /* 悬停状态 */
@@ -173,6 +187,30 @@ function handleMouseLeave() {
 .btn-delete:hover {
   background: #ef4444;
   transform: scale(1.1);
+}
+
+.btn-copy {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #909399;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-copy:hover {
+  background: #606266;
+  transform: scale(1.1);
+}
+
+.toolbar-icon {
+  line-height: 1;
 }
 
 /* 拖拽手柄 */

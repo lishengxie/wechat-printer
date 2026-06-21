@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, inject, onMounted, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDocumentStore } from '@/stores/document'
 import { createModule } from '@/types/document'
@@ -9,6 +9,8 @@ import ModuleItem from './ModuleItem.vue'
 
 const documentStore = useDocumentStore()
 const { document } = storeToRefs(documentStore)
+
+const canvasWidth = inject('canvasWidth', ref('667px'))
 
 // 拖拽状态
 const isDragOverCanvas = ref(false)
@@ -21,7 +23,12 @@ const draggableRef = ref<any>(null)
 
 watch(() => document.value.root.children, (newChildren) => {
   if (newChildren) {
-    moduleList.value = [...newChildren]
+    // 只在内容变更（增/删）时重建列表，避免拖拽重排后 scroll 跳转
+    const newIds = newChildren.map(m => m.id).join(',')
+    const currIds = moduleList.value.map(m => m.id).join(',')
+    if (newIds !== currIds) {
+      moduleList.value = [...newChildren]
+    }
   } else {
     moduleList.value = []
   }
@@ -152,6 +159,7 @@ onBeforeUnmount(() => {
         tag="div"
         class="drop-canvas"
         :class="{ 'drag-active': isDragOverCanvas }"
+        :style="{ maxWidth: canvasWidth, margin: '0 auto', backgroundColor: documentStore.document.pageStyles?.backgroundColor || '#ffffff' }"
         ghost-class="drag-ghost"
         @update="onDragUpdate"
         :animation="200"
@@ -178,7 +186,8 @@ onBeforeUnmount(() => {
 .editor-canvas {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   background-color: #f5f7fa;
 }
 

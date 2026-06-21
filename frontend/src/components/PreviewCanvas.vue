@@ -30,7 +30,7 @@ const modules = computed(() => document.value.root.children || [])
       </div>
 
       <!-- 文章内容区 -->
-      <div class="article-content">
+      <div class="article-content" :style="{ backgroundColor: documentStore.document.pageStyles?.backgroundColor || '#ffffff' }">
         <!-- 文章标题 -->
         <h1 class="article-title">{{ document.title }}</h1>
 

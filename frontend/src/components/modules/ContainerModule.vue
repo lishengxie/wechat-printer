@@ -28,7 +28,7 @@ watch(() => props.module.children, (children) => {
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '24px 16px 16px',
-  backgroundColor: props.module.styles.backgroundColor || '#fafafa',
+  backgroundColor: props.module.styles.backgroundColor || 'transparent',
   borderRadius: props.module.styles.borderRadius || '8px',
   border: props.module.styles.border || '2px dashed #c0c4cc',
   margin: props.module.styles.margin || '8px 0'

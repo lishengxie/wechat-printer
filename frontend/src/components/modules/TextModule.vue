@@ -40,7 +40,13 @@ function onContentUpdate(content: string) {
     <div v-if="module.props.icon" class="text-icon-row">
       <span class="text-icon">{{ module.props.icon }}</span>
     </div>
-    <div class="editor-wrapper" :style="editorStyle">
+    <div
+      class="editor-wrapper"
+      :style="{
+        ...editorStyle,
+        '--paragraph-spacing': props.module.styles.paragraphSpacing || '0'
+      }"
+    >
       <RichTextEditor
         :content="module.props.content"
         :editable="!isPreviewMode"

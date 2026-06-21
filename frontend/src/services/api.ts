@@ -1,3 +1,4 @@
+import juice from 'juice/client'
 import type { Document, Module, ModuleStyles } from '@/types/document'
 import { createModule, createEmptyDocument } from '@/types/document'
 import { useAuthStore } from '@/stores/auth'
@@ -296,83 +297,109 @@ export const api = {
 
 function generateHTMLFromDocument(document: Document): string {
   // WeChat-safe HTML generator
-  // Only uses supported tags: section, p, span, strong, img
-  // Only uses supported inline styles: color, text-align, background-color,
-  // font-size, font-weight, margin, padding, border-bottom, display (inline-block),
-  // vertical-align, width
+  // Uses juice to inline CSS into style attributes, ensuring styles survive
+  // when pasted into WeChat's editor (which strips <style> tags but keeps inline styles).
 
-  function getInlineStyle(styles: any): string {
-    return Object.entries(styles)
-      .filter(([, value]) => value && value !== 'transparent')
-      .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
-      .join('; ')
+  const s = (v: any) => v && v !== 'transparent' ? String(v) : ''
+
+  function moduleCSS(i: number, m: any): string {
+    const st = m.styles || {}
+    const sel = `.m${i}`
+    const rules: string[] = ['margin:0 0 16px 0']
+    if (s(st.backgroundColor)) rules.push('background-color:' + st.backgroundColor)
+    if (s(st.padding)) rules.push('padding:' + st.padding)
+    if (s(st.textAlign)) rules.push('text-align:' + st.textAlign)
+    if (s(st.color)) rules.push('color:' + st.color)
+    if (s(st.fontSize)) rules.push('font-size:' + st.fontSize)
+    if (s(st.fontFamily)) rules.push('font-family:' + st.fontFamily)
+    if (s(st.lineHeight)) rules.push('line-height:' + st.lineHeight)
+
+    let css = `${sel}{${rules.join(';')}}`
+
+    // Inner content wrapper — inherit text styles
+    if (s(st.color) || s(st.fontSize) || s(st.fontFamily) || s(st.lineHeight)) {
+      const inner: string[] = ['margin:0']
+      if (s(st.color)) inner.push('color:' + st.color)
+      if (s(st.fontSize)) inner.push('font-size:' + st.fontSize)
+      if (s(st.fontFamily)) inner.push('font-family:' + st.fontFamily)
+      if (s(st.lineHeight)) inner.push('line-height:' + st.lineHeight)
+      css += `\n.${sel}-inner{${inner.join(';')}}`
+    }
+
+    return css
   }
 
-  function renderModule(module: any): string {
-    const baseStyle = 'margin: 0 0 16px 0;' + getInlineStyle(module.styles)
-    switch (module.type) {
+  function renderModule(i: number, m: any): string {
+    const cls = `m${i}`
+    const p = m.props || {}
+    const st = m.styles || {}
+
+    switch (m.type) {
       case 'text': {
-        const iconHtml = module.props.icon
-          ? `<p style="margin: 0 0 4px 0; font-size: 20px; line-height: 1;">${module.props.icon}</p>`
-          : ''
-        return `<section style="${baseStyle}">${iconHtml}<p style="margin: 0;">${module.props.content}</p></section>`
+        const icon = p.icon ? `<p style="margin:0 0 4px 0;font-size:20px;line-height:1">${p.icon}</p>` : ''
+        return `<section class="${cls}">${icon}<section class="${cls}-inner">${p.content || ''}</section></section>`
       }
       case 'image': {
-        const img = `<section style="${baseStyle}text-align: center;"><img src="${module.props.src}" alt="${module.props.alt || ''}" style="max-width: 100%; height: auto;" /></section>`
-        const caption = module.props.caption
-          ? `<p style="margin: 8px 0 0 0; font-size: ${module.props.captionStyle?.fontSize || '13px'}; color: ${module.props.captionStyle?.color || '#9ca3af'}; font-style: ${module.props.captionStyle?.italic ? 'italic' : 'normal'}; text-align: ${module.props.captionStyle?.textAlign || 'center'};">${module.props.caption}</p>`
+        const img = `<section class="${cls}" style="text-align:center"><img src="${p.src}" alt="${p.alt || ''}" style="max-width:100%;height:auto" /></section>`
+        const cap = p.caption
+          ? `<p style="margin:8px 0 0 0;font-size:${p.captionStyle?.fontSize || '13px'};color:${p.captionStyle?.color || '#9ca3af'};font-style:${p.captionStyle?.italic ? 'italic' : 'normal'};text-align:${p.captionStyle?.textAlign || 'center'}">${p.caption}</p>`
           : ''
-        return img + caption
+        return img + cap
       }
       case 'divider':
-        return `<section style="${baseStyle}text-align: center;"><p style="margin: 0; border-bottom: 2px solid ${module.props.color || '#e5e7eb'}; line-height: 0; font-size: 0;">&nbsp;</p></section>`
+        return `<section class="${cls}" style="text-align:center"><p style="margin:0;border-bottom:2px solid ${p.color || '#e5e7eb'};line-height:0;font-size:0">&nbsp;</p></section>`
       case 'button':
-        return `<section style="${baseStyle}text-align: ${module.styles.textAlign || 'center'};"><span style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: #ffffff;">${module.props.text}</span></section>`
+        return `<section class="${cls}" style="text-align:${st.textAlign || 'center'}"><span style="display:inline-block;padding:12px 24px;background:#3b82f6;color:#fff">${p.text}</span></section>`
       case 'container':
-        return renderContainer(module, baseStyle)
+        return renderContainer(i, m)
       case 'header':
-        return renderHeader(module)
+        return renderHeader(m)
+      case 'heading': {
+        const fs = p.level === 1 ? '22px' : p.level === 2 ? '18px' : '16px'
+        return `<section class="${cls}"><p style="margin:0;font-size:${fs};font-weight:bold">${p.text}</p></section>`
+      }
+      case 'markdown':
+        return `<section class="${cls}">${p.content || ''}</section>`
       case 'footer':
-        return renderFooter(module)
+        return renderFooter(m)
       case 'toc':
-        return renderToc(module)
+        return renderToc(m)
       case 'quote': {
-        const iconHtml = module.props.icon
-          ? `<p style="margin: 0 0 4px 0; font-size: 20px; line-height: 1;">${module.props.icon}</p>`
-          : ''
-        const authorHtml = module.props.author
-          ? `<p style="margin: 8px 0 0 0; font-size: 13px; color: #9ca3af; text-align: right;">—— ${module.props.author}</p>`
-          : ''
-        return `<section style="${baseStyle}">${iconHtml}<p style="margin: 0; font-style: italic;">${module.props.content}</p>${authorHtml}</section>`
+        const icon = p.icon ? `<p style="margin:0 0 4px 0;font-size:20px;line-height:1">${p.icon}</p>` : ''
+        const author = p.author ? `<p style="margin:8px 0 0 0;font-size:13px;color:#9ca3af;text-align:right">—— ${p.author}</p>` : ''
+        return `<section class="${cls}">${icon}<p style="margin:0;font-style:italic">${p.content || ''}</p>${author}</section>`
       }
       default:
         return ''
     }
   }
 
-  function renderContainer(module: any, baseStyle: string): string {
-    const layout = module.props.layout || 'single'
-    const children = module.children?.map((c: any) => renderModule(c)).join('') || ''
+  function renderContainer(i: number, m: any): string {
+    const cls = `m${i}`
+    const layout = m.props?.layout || 'single'
+    const children = (m.children || []).map((c: any, ci: number) => renderModule(i * 100 + ci + 1, c)).join('')
     if (layout === 'single') {
-      return `<section style="${baseStyle}">${children}</section>`
+      return `<section class="${cls}">${children}</section>`
     }
     const colCount = layout === 'three-column' ? 3 : 2
-    const childrenArr = module.children || []
-    const cols = childrenArr.map((child: any) => {
-      const html = renderModule(child)
-      return `<td style="vertical-align: top; padding: 0 8px; width: ${100 / colCount}%;">${html}</td>`
+    const cols = (m.children || []).map((c: any, ci: number) => {
+      const html = renderModule(i * 100 + ci + 1, c)
+      return `<td style="vertical-align:top;padding:0 8px;width:${100 / colCount}%">${html}</td>`
     }).join('')
-    return `<section style="${baseStyle}"><table style="width: 100%;"><tr>${cols}</tr></table></section>`
+    return `<section class="${cls}"><table style="width:100%"><tr>${cols}</tr></table></section>`
   }
 
-  function renderHeader(module: any): string {
-    const p = module.props
-    const s = module.styles
-    const align = s.textAlign || 'center'
-    return `<section style="margin: 0 0 16px 0; padding: 24px 16px; background: #f8fafc; text-align: ${align};">
-  <p style="color: ${s.color || '#1f2937'}; font-weight: bold; margin: 0 0 8px 0;">${p.title}</p>
-  ${p.subtitle ? `<p style="color: #6b7280; margin: 0 0 16px 0;">${p.subtitle}</p>` : ''}
-  <p style="color: #9ca3af; margin: 0;">
+  function renderHeader(m: any): string {
+    const p = m.props || {}
+    const st = m.styles || {}
+    const align = st.textAlign || 'center'
+    const titleColor = s(st.color) || '#1f2937'
+    const titleFont = s(st.fontFamily) ? `;font-family:${st.fontFamily}` : ''
+    const titleSize = s(st.fontSize) ? `;font-size:${st.fontSize}` : ''
+    return `<section style="margin:0 0 16px 0;padding:24px 16px;background:#f8fafc;text-align:${align};">
+  <p style="margin:0 0 8px 0;font-weight:bold;color:${titleColor}${titleFont}${titleSize}">${p.title}</p>
+  ${p.subtitle ? `<p style="margin:0 0 16px 0;color:#6b7280${titleFont}${titleSize}">${p.subtitle}</p>` : ''}
+  <p style="margin:0;color:#9ca3af">
     ${p.showAuthor && p.author ? `<span>${p.author}</span>` : ''}
     ${p.showAuthor && p.author && p.showDate && p.date ? '&nbsp;&nbsp;' : ''}
     ${p.showDate && p.date ? `<span>${p.date}</span>` : ''}
@@ -380,58 +407,83 @@ function generateHTMLFromDocument(document: Document): string {
 </section>`
   }
 
-  function renderFooter(module: any): string {
-    const p = module.props
-    const s = module.styles
-    let html = `<section style="margin: 0 0 16px 0; text-align: ${s.textAlign || 'center'}; padding: 16px;">`
+  function renderFooter(m: any): string {
+    const p = m.props || {}
+    const st = m.styles || {}
+    let html = `<section style="margin:0 0 16px 0;text-align:${st.textAlign || 'center'};padding:16px">`
     if (p.showDivider) {
-      html += `<p style="margin: 0 0 16px 0; border-bottom: 1px solid #e5e7eb; line-height: 0; font-size: 0;">&nbsp;</p>`
+      html += `<p style="margin:0 0 16px 0;border-bottom:1px solid #e5e7eb;line-height:0;font-size:0">&nbsp;</p>`
     }
+    const textColor = s(st.color) || '#6b7280'
+    const textFont = s(st.fontFamily) ? `;font-family:${st.fontFamily}` : ''
+    const textSize = s(st.fontSize) ? `;font-size:${st.fontSize}` : ''
     if (p.text) {
-      html += `<p style="color: ${s.color || '#6b7280'}; margin: 0 0 8px 0;">${p.text}</p>`
+      html += `<p style="margin:0 0 8px 0;color:${textColor}${textFont}${textSize}">${p.text}</p>`
     }
     if (p.copyright) {
-      html += `<p style="color: #9ca3af; margin: 0;">${p.copyright}</p>`
+      html += `<p style="margin:0;color:#9ca3af${textFont}${textSize}">${p.copyright}</p>`
     }
     html += '</section>'
     return html
   }
 
-  function renderToc(module: any): string {
-    const p = module.props
+  function renderToc(m: any): string {
+    const p = m.props || {}
     const items = (p.items || []).map((item: any) => {
       const pad = (item.level || 0) * 16
-      const bulletColor = item.level === 0 ? '#3b82f6' : '#93c5fd'
+      const bc = item.level === 0 ? '#3b82f6' : '#93c5fd'
       const fw = item.level === 0 ? 'bold' : 'normal'
-      const color = item.level === 0 ? '#374151' : '#6b7280'
-      return `<p style="margin: 6px 0; padding-left: ${pad}px;">
-  <span style="display: inline-block; width: 6px; height: 6px; background: ${bulletColor}; margin-right: 8px; vertical-align: middle;"></span>
-  <span style="font-weight: ${fw}; color: ${color};">${item.text}</span>
+      const c = item.level === 0 ? '#374151' : '#6b7280'
+      return `<p style="margin:6px 0;padding-left:${pad}px">
+  <span style="display:inline-block;width:6px;height:6px;background:${bc};margin-right:8px;vertical-align:middle"></span>
+  <span style="font-weight:${fw};color:${c}">${item.text}</span>
 </p>`
     }).join('')
-    return `<section style="margin: 0 0 16px 0; padding: 16px; background: #f8fafc; border: 1px solid #e5e7eb;">
-  <p style="font-weight: bold; color: #1f2937; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb;">${p.title}</p>
+    return `<section style="margin:0 0 16px 0;padding:16px;background:#f8fafc;border:1px solid #e5e7eb">
+  <p style="font-weight:bold;color:#1f2937;margin:0 0 12px 0;padding-bottom:8px;border-bottom:2px solid #e5e7eb">${p.title}</p>
   ${items}
 </section>`
   }
 
-  const bodyHtml = document.root.children?.map((child: any) => renderModule(child)).join('') || ''
-  return `<section style="max-width: 640px; margin: 0 auto; color: #333;">
-  <p style="font-weight: bold; color: #1f2937; margin: 0 0 8px 0;">${document.title}</p>
-  <p style="color: #9ca3af; margin: 0 0 20px 0; padding-bottom: 16px; border-bottom: 1px solid #eee;">${document.updatedAt || document.createdAt || ''}</p>
-  ${bodyHtml}
-</section>`
+  // Build all CSS and HTML
+  let allCss = ''
+  let allHtml = ''
+
+  document.root.children?.forEach((child, i) => {
+    allCss += moduleCSS(i, child) + '\n'
+    allHtml += renderModule(i, child)
+  })
+
+  // Page-level styles
+  const pageBg = document.pageStyles?.backgroundColor || '#ffffff'
+  const pageTitleCss = s(document.pageStyles?.color) ? `color:${document.pageStyles.color}` : 'color:#333'
+  const pageTitleFont = s(document.pageStyles?.fontFamily) ? `;font-family:${document.pageStyles.fontFamily}` : ''
+  const fullHtml = `<html><head><style>
+.page-wrap{max-width:640px;margin:0 auto;${pageTitleCss};background-color:${pageBg};padding:16px}
+.page-title{font-weight:bold;color:#1f2937;margin:0 0 8px 0${pageTitleFont}}
+.page-meta{color:#9ca3af;margin:0 0 20px 0;padding-bottom:16px;border-bottom:1px solid #eee${pageTitleFont}}
+${allCss}</style></head><body><section class="page-wrap">
+<section class="page-title">${document.title}</section>
+<section class="page-meta">${document.updatedAt || document.createdAt || ''}</section>
+${allHtml}
+</section></body></html>`
+
+  const inlined = juice(fullHtml)
+  // Extract body content — juice preserves <body> tags
+  const bodyMatch = inlined.match(/<body>([\s\S]*)<\/body>/i)
+  return bodyMatch ? bodyMatch[1] : allHtml
 }
 
 export interface AIChatRequest {
   prompt: string
-  module: any
-  mode?: 'style' | 'full'
+  module?: any       // 当前模块（模块编辑时传入，页面编辑时可为空）
+  mode?: 'style' | 'full' | 'page'
 }
 
 export interface AIChatResponse {
   explanation: string
   updated_module: string
+  updated_page_styles: string   // 页面样式 JSON（页面模式）
 }
 
 export interface AIConfigData {
@@ -446,7 +498,7 @@ export const apiAI = {
       method: 'POST',
       body: JSON.stringify({
         prompt: data.prompt,
-        module: JSON.stringify(data.module),
+        module: data.module ? JSON.stringify(data.module) : '',
         mode: data.mode || 'full'
       })
     })

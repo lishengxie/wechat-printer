@@ -31,24 +31,14 @@ const fontSizeOptions = [
 
 <template>
   <div class="space-y-4 pt-4 border-t border-gray-100">
-    <h4 class="text-xs font-medium text-gray-500 uppercase">文字内容</h4>
+    <h4 class="text-xs font-medium text-gray-500 uppercase">Markdown 内容</h4>
     <div>
-      <label class="block text-sm text-gray-600 mb-1">图标 (Emoji)</label>
-      <input
-        type="text"
-        :value="(selectedModule?.props as any)?.icon || ''"
-        @change="updateProps({ icon: ($event.target as HTMLInputElement).value })"
-        class="w-full px-3 py-2 border rounded text-sm"
-        placeholder="如 📢 ✨ 💡（选填）"
-      />
-    </div>
-    <div>
-      <label class="block text-sm text-gray-600 mb-1">内容</label>
+      <label class="block text-sm text-gray-600 mb-1">源码</label>
       <textarea
         :value="(selectedModule?.props as any)?.content"
         @change="updateProps({ content: ($event.target as HTMLTextAreaElement).value })"
-        class="w-full px-3 py-2 border rounded text-sm min-h-[100px]"
-        placeholder="输入文字内容..."
+        class="w-full px-3 py-2 border rounded text-sm min-h-[160px] font-mono"
+        placeholder="输入 Markdown 内容..."
       ></textarea>
     </div>
 
@@ -88,23 +78,6 @@ const fontSizeOptions = [
             {{ size }}
           </option>
         </select>
-      </div>
-
-      <!-- 段落间距 -->
-      <div class="mb-3">
-        <label class="block text-sm text-gray-600 mb-1">段落间距</label>
-        <div class="flex items-center gap-3">
-          <el-slider
-            :model-value="parseInt((selectedModule?.styles?.paragraphSpacing || '0').replace('px', ''))"
-            @update:model-value="(v: number) => updateStyles({ paragraphSpacing: v + 'px' })"
-            :min="0"
-            :max="32"
-            :step="2"
-            size="small"
-            style="flex: 1;"
-          />
-          <span class="text-sm text-gray-500 w-10 text-right">{{ selectedModule?.styles?.paragraphSpacing || '0' }}</span>
-        </div>
       </div>
     </div>
   </div>

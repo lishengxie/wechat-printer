@@ -11,7 +11,9 @@ export interface ImportResult {
 
 // Regex for ::: block:  :::type key="value"\ncontent\n:::
 // Captures: type name, attribute string, content text
-const MODULE_BLOCK_RE = /^:::(\w+)((?:\s+\w+="[^"]*")*)\s*\n?([\s\S]*?)\n:::/gm
+// Tolerates leading whitespace on both the opening and closing fence lines so
+// that indented markdown (e.g. pasted with 2-space indent) still parses.
+const MODULE_BLOCK_RE = /^[ \t]*:::(\w+)((?:\s+\w+="[^"]*")*)[ \t]*\n([\s\S]*?)^[ \t]*:::[ \t]*$/gm
 const ATTR_RE = /(\w+)="([^"]*)"/g
 
 function parseAttrs(attrStr: string): Record<string, string> {
@@ -251,7 +253,10 @@ function countLocalImages(modules: Module[]): number {
 }
 
 export async function importMarkdown(file: File): Promise<ImportResult> {
-  const content = await file.text()
+  const rawContent = await file.text()
+  // Normalize line endings so the ::: fence regex behaves the same on
+  // Windows-saved (CRLF) and Unix (LF) files.
+  const content = rawContent.replace(/\r\n?/g, '\n')
 
   if (!content.trim()) {
     throw new Error('文件内容为空')

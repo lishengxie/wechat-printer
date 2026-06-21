@@ -35,7 +35,7 @@ func (h *AIHandler) Chat(c *gin.Context) {
 		return
 	}
 
-	explanation, updatedModule, err := service.GenerateModuleSuggestion(req.Module, req.Prompt, req.Mode, dbCfg)
+	explanation, updatedModule, updatedPageStyles, err := service.GenerateSuggestion(req.Module, req.Prompt, req.Mode, dbCfg)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -43,8 +43,9 @@ func (h *AIHandler) Chat(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": model.AIChatResponse{
-			Explanation:   explanation,
-			UpdatedModule: updatedModule,
+			Explanation:       explanation,
+			UpdatedModule:     updatedModule,
+			UpdatedPageStyles: updatedPageStyles,
 		},
 	})
 }

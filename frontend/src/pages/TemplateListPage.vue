@@ -108,7 +108,7 @@ onMounted(loadLayouts)
             <div class="card-actions">
               <el-button size="small" type="primary" @click="createArticleFromTemplate(layout.id)">用此模板创建文章</el-button>
               <el-button size="small" @click="editLayout(layout.id)">编辑模板</el-button>
-              <el-button v-if="!layout.isPreset" size="small" type="danger" plain @click="deleteLayout(layout.id)">删除</el-button>
+              <el-button size="small" type="danger" plain @click="deleteLayout(layout.id)">删除</el-button>
             </div>
           </template>
         </el-card>

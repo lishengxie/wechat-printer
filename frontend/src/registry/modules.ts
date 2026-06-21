@@ -34,6 +34,22 @@ export const moduleRegistry: Record<ModuleType, ModuleRegistration> = {
     defaultStyles: {
       margin: '0 0 16px 0', padding: '0', backgroundColor: 'transparent',
       border: 'none', borderRadius: '0', textAlign: 'left', fontSize: '16px',
+      color: '#333333', fontWeight: 'normal', fontStyle: 'normal', lineHeight: '1.6',
+      paragraphSpacing: '0'
+    }
+  },
+  markdown: {
+    type: 'markdown',
+    name: 'Markdown',
+    group: '基础组件',
+    icon: '📄',
+    description: '用 Markdown 语法编写，实时预览渲染效果',
+    component: () => import('@/components/modules/MarkdownModule.vue'),
+    propertyPanel: () => import('@/components/property-editors/MarkdownProperty.vue'),
+    defaultProps: { content: '# Hello\n\n输入 **Markdown** 内容，实时预览渲染效果。' },
+    defaultStyles: {
+      margin: '0 0 16px 0', padding: '0', backgroundColor: 'transparent',
+      border: 'none', borderRadius: '0', textAlign: 'left', fontSize: '16px',
       color: '#333333', fontWeight: 'normal', fontStyle: 'normal', lineHeight: '1.6'
     }
   },
@@ -45,7 +61,7 @@ export const moduleRegistry: Record<ModuleType, ModuleRegistration> = {
     description: '上传并展示图片内容',
     component: () => import('@/components/modules/ImageModule.vue'),
     propertyPanel: () => import('@/components/property-editors/ImageProperty.vue'),
-    defaultProps: { src: '', alt: '图片', caption: '', captionStyle: { fontSize: '13px', color: '#9ca3af', italic: false, textAlign: 'center' } },
+    defaultProps: { src: '', alt: '图片', caption: '', align: 'center', captionStyle: { fontSize: '13px', color: '#9ca3af', italic: false, textAlign: 'center' } },
     defaultStyles: {
       margin: '0 0 16px 0', padding: '0', backgroundColor: 'transparent',
       border: 'none', borderRadius: '0', textAlign: 'left', fontSize: '16px',

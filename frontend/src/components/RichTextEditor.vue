@@ -45,6 +45,17 @@ const editor = useEditor({
     })
   ],
   editable: props.editable ?? true,
+  editorProps: {
+    // 阻止外部拖入插入文本（如模块拖到编辑区时浏览器自动注入的文字）
+    handleDrop: (view, event) => {
+      event.preventDefault()
+      return true
+    },
+    // 阻止 ProseMirror 默认的粘贴处理，让 Vue 的 @paste 控制
+    handlePaste: (view, event) => {
+      return false // 放行，让默认行为处理
+    }
+  },
   onUpdate: ({ editor: ed }) => {
     const html = ed.getHTML()
     if (html !== props.content) {
@@ -68,12 +79,6 @@ watch(() => props.editable, (val) => {
 onBeforeUnmount(() => {
   editor.value?.destroy()
 })
-
-function handlePaste(event: ClipboardEvent) {
-  event.preventDefault()
-  const text = event.clipboardData?.getData('text/plain') || ''
-  editor.value?.chain().focus().insertContent(text).run()
-}
 
 function shouldShowBubbleMenu({ editor: ed }: { editor: any }) {
   if (isPreviewMode) return false
@@ -204,7 +209,7 @@ const fontSizeOptions = ['12px', '14px', '16px', '18px', '20px', '24px', '28px',
     <EditorContent
       :editor="editor"
       class="editor-content"
-      @paste="handlePaste"
+      @drop.prevent
     />
   </div>
 </template>
@@ -219,7 +224,7 @@ const fontSizeOptions = ['12px', '14px', '16px', '18px', '20px', '24px', '28px',
 }
 
 .editor-content :deep(p) {
-  margin: 0;
+  margin: var(--paragraph-spacing, 0);
   word-break: break-word;
 }
 

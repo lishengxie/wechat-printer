@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, provide, onMounted } from 'vue'
+import { ref, computed, provide, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
@@ -10,7 +10,7 @@ import EditorCanvas from '@/components/EditorCanvas.vue'
 import PropertyPanel from '@/components/PropertyPanel.vue'
 import PreviewCanvas from '@/components/PreviewCanvas.vue'
 import AIChatDialog from '@/components/AIChatDialog.vue'
-import api, { type Layout } from '@/services/api'
+import api from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -45,6 +45,71 @@ const showExportModal = ref(false)
 const exportedHTML = ref('')
 const isExporting = ref(false)
 const isSaving = ref(false)
+const isDirty = ref(false)
+const isInitialLoadComplete = ref(false)
+
+// 画布宽度
+const canvasWidthOptions = [
+  { label: '自适应', value: '100%' },
+  { label: '667px（公众号）', value: '667px' },
+  { label: '580px', value: '580px' },
+  { label: '480px', value: '480px' },
+  { label: '375px（手机）', value: '375px' },
+]
+const canvasWidth = ref('667px')
+provide('canvasWidth', canvasWidth)
+
+// 监听文档变化标记脏状态
+watch(() => documentStore.document, () => {
+  if (isInitialLoadComplete.value) {
+    isDirty.value = true
+  }
+}, { deep: true })
+
+// 自动保存：每 5 秒检查一次
+let autoSaveTimer: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  autoSaveTimer = setInterval(() => {
+    if (isDirty.value && !isSaving.value) {
+      handleSave(true)
+    }
+  }, 5000)
+})
+
+onBeforeUnmount(() => {
+  if (autoSaveTimer) clearInterval(autoSaveTimer)
+})
+
+// 键盘快捷键
+function handleKeydown(event: KeyboardEvent) {
+  if (isPreviewMode.value) return
+
+  // 忽略输入框/文本区域内的快捷键
+  const target = event.target as HTMLElement
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+
+  const selectedId = selectedModuleId.value
+  if (!selectedId) return
+
+  const isCtrl = event.ctrlKey || event.metaKey
+
+  if (isCtrl && event.key === 'd') {
+    event.preventDefault()
+    documentStore.duplicateModule(selectedId)
+  } else if (event.key === 'Delete' || event.key === 'Backspace') {
+    event.preventDefault()
+    documentStore.removeModule(selectedId)
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 
 // AI 助手面板
 const showAIPanel = ref(false)
@@ -62,43 +127,7 @@ function handleRedo() {
   documentStore.redo()
 }
 
-// 样式选择器（模板选择弹窗）
-const showStylePicker = ref(false)
-const applyingTemplate = ref(false)
-const availableTemplates = ref<Layout[]>([])
-const associatedTemplate = ref<Layout | null>(null)
-provide('associatedTemplate', associatedTemplate)
-
-async function loadTemplates() {
-  try {
-    availableTemplates.value = await api.listLayouts()
-  } catch (e) {
-    console.warn('Failed to load templates:', e)
-  }
-}
-
-async function selectTemplate(tmpl: Layout) {
-  if (applyingTemplate.value) return
-  applyingTemplate.value = true
-  try {
-    // Just associate the template with the article, don't auto-apply styles
-    associatedTemplate.value = tmpl
-    if (isArticleMode) {
-      articleMeta.value.layout_id = tmpl.id
-    }
-    ElMessage.success(`已关联「${tmpl.name}」，可在属性面板中按模块应用样式`)
-    showStylePicker.value = false
-  } catch (e: any) {
-    ElMessage.error('关联模板失败: ' + e.message)
-  } finally {
-    applyingTemplate.value = false
-  }
-}
-
 onMounted(async () => {
-  // Load layouts list first
-  await loadTemplates()
-
   if (isArticleMode) {
     try {
       const article = await api.getArticle(entityId)
@@ -132,21 +161,9 @@ onMounted(async () => {
 
       // Apply template styles if URL param specified (from creation flow)
       if (templateId) {
-        const tmpl = availableTemplates.value.find(t => t.id === templateId)
-          || await api.getLayout(templateId)
+        const tmpl = await api.getLayout(templateId)
         if (tmpl.document) {
           documentStore.applyTemplateFromDocument(tmpl.document)
-          associatedTemplate.value = tmpl
-        }
-      } else if (article.layout_id) {
-        // Load associated template from article data
-        try {
-          const tmpl = await api.getLayout(article.layout_id)
-          if (tmpl.document) {
-            associatedTemplate.value = tmpl
-          }
-        } catch (e) {
-          console.warn('Failed to load associated template:', e)
         }
       }
     } catch (e: any) {
@@ -167,9 +184,10 @@ onMounted(async () => {
       router.push('/dashboard/templates')
     }
   }
+  isInitialLoadComplete.value = true
 })
 
-async function handleSave() {
+async function handleSave(autoSave = false) {
   isSaving.value = true
   try {
     if (isArticleMode) {
@@ -188,9 +206,16 @@ async function handleSave() {
         document: documentStore.document
       })
     }
-    ElMessage.success('保存成功！')
+    isDirty.value = false
+    if (autoSave) {
+      ElMessage.success({ message: '已自动保存', duration: 800 })
+    } else {
+      ElMessage.success({ message: '保存成功！', duration: 1000 })
+    }
   } catch (error) {
-    ElMessage.error('保存失败，请重试')
+    if (!autoSave) {
+      ElMessage.error('保存失败，请重试')
+    }
     console.error('Save failed:', error)
   } finally {
     isSaving.value = false
@@ -283,8 +308,22 @@ function goBack() {
             ↪ 重做
           </el-button>
         </el-button-group>
-      </div>
 
+        <!-- 画布宽度控制 -->
+        <el-select
+          :model-value="canvasWidth"
+          @change="(v: string) => canvasWidth = v"
+          size="small"
+          style="width: 140px; margin-left: 12px;"
+        >
+          <el-option
+            v-for="opt in canvasWidthOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
       <div class="toolbar-right">
         <el-button type="primary" :loading="isSaving" @click="handleSave">
           💾 保存
@@ -313,6 +352,11 @@ function goBack() {
           <!-- 中间：编辑器画布 -->
           <section class="editor-area">
             <EditorCanvas />
+            <AIChatDialog
+              :visible="showAIPanel"
+              :selected-module="selectedModuleForAI"
+              @toggle="showAIPanel = !showAIPanel"
+            />
           </section>
 
           <!-- 右侧：属性面板 -->
@@ -320,13 +364,6 @@ function goBack() {
             <PropertyPanel />
           </aside>
         </div>
-
-        <!-- AI 排版助手（页面底部常驻面板） -->
-        <AIChatDialog
-          :visible="showAIPanel"
-          :selected-module="selectedModuleForAI"
-          @toggle="showAIPanel = !showAIPanel"
-        />
       </template>
     </main>
 
@@ -455,6 +492,8 @@ body {
 .editor-area {
   flex: 1;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 右侧边栏 - 属性面板 */

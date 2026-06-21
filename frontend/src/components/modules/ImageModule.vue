@@ -31,6 +31,14 @@ const captionStyle = computed(() => {
   }
 })
 
+const imageAlignStyle = computed(() => {
+  const align = props.module.props.align || 'center'
+  return {
+    marginLeft: align === 'center' ? 'auto' : (align === 'right' ? 'auto' : '0'),
+    marginRight: align === 'center' ? 'auto' : '0'
+  }
+})
+
 function onCaptionUpdate(content: string) {
   documentStore.updateModuleProps(props.module.id, { caption: content })
 }
@@ -149,7 +157,8 @@ function onFileInputChange(event: Event) {
           width: module.props.width || '100%',
           height: module.props.height,
           border: module.styles.border,
-          borderRadius: module.styles.borderRadius || '8px'
+          borderRadius: module.styles.borderRadius || '8px',
+          ...imageAlignStyle
         }"
       />
       <div

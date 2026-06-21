@@ -56,7 +56,7 @@ function onTitleUpdate(content: string) {
 
     <!-- 卡片风 -->
     <template v-if="module.props.variant === 'card'">
-      <div class="card-inner" :style="{ backgroundColor: module.styles.backgroundColor || '#ffffff', border: module.styles.border || '1px solid #e5e7eb' }">
+      <div class="card-inner" :style="{ backgroundColor: module.styles.backgroundColor || 'transparent', border: module.styles.border || '1px solid #e5e7eb' }">
         <div class="card-title">
           <span class="card-bar"></span>
           <RichTextEditor

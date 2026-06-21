@@ -15,7 +15,7 @@ const isPreviewMode = inject('isPreviewMode', ref(false))
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '24px 16px',
-  backgroundColor: props.module.styles.backgroundColor || '#f8fafc',
+  backgroundColor: props.module.styles.backgroundColor || 'transparent',
   borderRadius: props.module.styles.borderRadius || '8px',
   border: props.module.styles.border || 'none',
   margin: props.module.styles.margin || '0 0 16px 0',

@@ -108,18 +108,48 @@ function parseCurrentBorder(): { width: string; style: string; color: string } {
 
     <!-- 图片宽度 -->
     <div>
-      <label class="block text-sm text-gray-600 mb-1">宽度</label>
-      <select
-        :value="(selectedModule?.props as any)?.width || '100%'"
-        @change="updateProps({ width: ($event.target as HTMLSelectElement).value })"
-        class="w-full px-3 py-2 border rounded text-sm"
-      >
-        <option value="100%">100% — 整行</option>
-        <option value="75%">75% — 四分之三</option>
-        <option value="50%">50% — 一半</option>
-        <option value="25%">25% — 四分之一</option>
-        <option value="auto">auto — 原始尺寸</option>
-      </select>
+      <label class="block text-sm text-gray-600 mb-1">图片大小</label>
+      <div class="flex items-center gap-3 mb-2">
+        <el-slider
+          :model-value="parseInt((selectedModule?.props as any)?.width?.replace('%', '') || '100')"
+          @update:model-value="(v: number) => updateProps({ width: v + '%' })"
+          :min="10"
+          :max="100"
+          size="small"
+          :disabled="(selectedModule?.props as any)?.width === 'auto'"
+          style="flex: 1;"
+        />
+        <span class="text-sm text-gray-500 w-10 text-right">{{ (selectedModule?.props as any)?.width === 'auto' ? '原始' : (selectedModule?.props as any)?.width || '100%' }}</span>
+      </div>
+      <label class="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
+        <input
+          type="checkbox"
+          :checked="(selectedModule?.props as any)?.width === 'auto'"
+          @change="(e: any) => updateProps({ width: e.target.checked ? 'auto' : '100%' })"
+          class="w-4 h-4"
+        />
+        原始尺寸
+      </label>
+    </div>
+
+    <!-- 图片位置 -->
+    <div>
+      <label class="block text-sm text-gray-600 mb-1">图片位置</label>
+      <div class="flex gap-1">
+        <button
+          v-for="opt in [{ value: 'left', label: '左', icon: '←' }, { value: 'center', label: '中', icon: '↔' }, { value: 'right', label: '右', icon: '→' }]"
+          :key="opt.value"
+          :class="[
+            'flex-1 px-2 py-1.5 text-sm border rounded transition-colors',
+            ((selectedModule?.props as any)?.align || 'center') === opt.value
+              ? 'bg-blue-50 border-blue-400 text-blue-600'
+              : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+          ]"
+          @click="updateProps({ align: opt.value })"
+        >
+          {{ opt.icon }}
+        </button>
+      </div>
     </div>
 
     <!-- 边框 -->

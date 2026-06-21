@@ -10,6 +10,7 @@ export const useDocumentStore = defineStore('document', () => {
   const history = ref<Document[]>([])
   const historyIndex = ref(-1)
   const MAX_HISTORY = 50
+  const copiedModule = ref<Module | null>(null)
 
   // Computed
   const selectedModule = computed(() => {
@@ -377,32 +378,26 @@ export const useDocumentStore = defineStore('document', () => {
   function addModule(newModule: Module, parentId?: string, index?: number) {
     saveToHistory()
 
-    // 创建整个 document 的新引用确保响应式
-    const newDocument = JSON.parse(JSON.stringify(document.value))
-
     if (parentId) {
-      // 添加到容器内
-      const parent = findModuleById(newDocument.root, parentId)
+      const parent = findModuleById(document.value.root, parentId)
       if (parent && isContainerModule(parent)) {
         if (!parent.children) parent.children = []
-        // 确保索引有效
         const insertIndex = (index !== undefined && index >= 0)
           ? Math.min(index, parent.children.length)
           : parent.children.length
         parent.children.splice(insertIndex, 0, newModule)
+        parent.children = [...parent.children] // 触发响应式
       }
     } else {
-      // 添加到根容器
-      if (!newDocument.root.children) newDocument.root.children = []
-      // 确保索引有效
+      if (!document.value.root.children) document.value.root.children = []
       const insertIndex = (index !== undefined && index >= 0)
-        ? Math.min(index, newDocument.root.children.length)
-        : newDocument.root.children.length
-      newDocument.root.children.splice(insertIndex, 0, newModule)
+        ? Math.min(index, document.value.root.children.length)
+        : document.value.root.children.length
+      document.value.root.children.splice(insertIndex, 0, newModule)
+      document.value.root.children = [...document.value.root.children] // 触发响应式
     }
 
-    newDocument.updatedAt = new Date().toISOString()
-    document.value = newDocument
+    document.value.updatedAt = new Date().toISOString()
   }
 
   function removeModule(id: string) {
@@ -414,16 +409,14 @@ export const useDocumentStore = defineStore('document', () => {
 
     saveToHistory()
 
-    // 创建整个 document 的新引用确保响应式
-    const newDocument = JSON.parse(JSON.stringify(document.value))
-
-    const parent = findParentModule(newDocument.root, id)
+    const parent = findParentModule(document.value.root, id)
     console.log('  - Found parent:', parent?.id)
     if (parent && parent.children) {
       const index = parent.children.findIndex(m => m.id === id)
       console.log('  - Found index:', index)
       if (index !== -1) {
         parent.children.splice(index, 1)
+        parent.children = [...parent.children] // 触发响应式
         console.log('  ✅ Module removed')
       }
     }
@@ -432,68 +425,143 @@ export const useDocumentStore = defineStore('document', () => {
       selectedModuleId.value = null
     }
 
-    newDocument.updatedAt = new Date().toISOString()
-    document.value = newDocument
+    document.value.updatedAt = new Date().toISOString()
+  }
+
+  function copyModule(id: string) {
+    const module = findModuleById(document.value.root, id)
+    if (module) {
+      copiedModule.value = JSON.parse(JSON.stringify(module))
+    }
+  }
+
+  function pasteModule(parentId?: string, index?: number) {
+    if (!copiedModule.value) return
+    saveToHistory()
+
+    const clone = JSON.parse(JSON.stringify(copiedModule.value)) as Module
+    clone.id = generateId()
+
+    // 递归重新生成子模块 ID
+    function regenerateIds(module: Module) {
+      module.id = generateId()
+      if (module.children) {
+        module.children.forEach(regenerateIds)
+      }
+    }
+    if (clone.children) {
+      clone.children.forEach(regenerateIds)
+    }
+
+    if (parentId) {
+      const parent = findModuleById(document.value.root, parentId)
+      if (parent && parent.children) {
+        const insertIndex = (index !== undefined && index >= 0)
+          ? Math.min(index, parent.children.length)
+          : parent.children.length
+        parent.children.splice(insertIndex, 0, clone)
+        parent.children = [...parent.children]
+      } else if (parent) {
+        parent.children = [clone]
+      }
+    } else {
+      if (!document.value.root.children) document.value.root.children = []
+      const insertIndex = (index !== undefined && index >= 0)
+        ? Math.min(index, document.value.root.children.length)
+        : document.value.root.children.length
+      document.value.root.children.splice(insertIndex, 0, clone)
+      document.value.root.children = [...document.value.root.children]
+    }
+
+    document.value.updatedAt = new Date().toISOString()
+    selectedModuleId.value = clone.id
+  }
+
+  function duplicateModule(id: string) {
+    const module = findModuleById(document.value.root, id)
+    if (!module) return
+
+    saveToHistory()
+
+    // 克隆并重新生成 ID
+    const clone = JSON.parse(JSON.stringify(module)) as Module
+    clone.id = generateId()
+
+    function regenerateIds(m: Module) {
+      m.id = generateId()
+      if (m.children) {
+        m.children.forEach(regenerateIds)
+      }
+    }
+    if (clone.children) {
+      clone.children.forEach(regenerateIds)
+    }
+
+    // 在原始模块后面插入
+    const parent = findParentModule(document.value.root, id)
+    if (parent && parent.children) {
+      const originalIndex = parent.children.findIndex(m => m.id === id)
+      parent.children.splice(originalIndex + 1, 0, clone)
+      parent.children = [...parent.children]
+    }
+
+    document.value.updatedAt = new Date().toISOString()
+    selectedModuleId.value = clone.id
   }
 
   function reorderRootChildren(orderedIds: string[]) {
     saveToHistory()
-    const newDocument = JSON.parse(JSON.stringify(document.value))
-    const children = newDocument.root.children || []
+    const children = document.value.root.children || []
     const moduleMap = new Map(children.map((m: Module) => [m.id, m]))
-    newDocument.root.children = orderedIds
+    document.value.root.children = orderedIds
       .map((id: string) => moduleMap.get(id))
-      .filter(Boolean)
-    newDocument.updatedAt = new Date().toISOString()
-    document.value = newDocument
+      .filter(Boolean) as Module[]
+    document.value.updatedAt = new Date().toISOString()
   }
 
   function reorderChildModules(parentId: string, orderedIds: string[]) {
     saveToHistory()
-
-    const newDocument = JSON.parse(JSON.stringify(document.value))
-    const parent = findModuleById(newDocument.root, parentId)
+    const parent = findModuleById(document.value.root, parentId)
     if (!parent || !parent.children) return
-
     const moduleMap = new Map(parent.children.map((m: Module) => [m.id, m]))
     parent.children = orderedIds
       .map((id: string) => moduleMap.get(id))
       .filter(Boolean) as Module[]
-
-    newDocument.updatedAt = new Date().toISOString()
-    document.value = newDocument
+    document.value.updatedAt = new Date().toISOString()
   }
 
   function moveModule(moduleId: string, newParentId: string | null, newIndex: number) {
     saveToHistory()
 
-    // 创建整个 document 的新引用确保响应式
-    const newDocument = JSON.parse(JSON.stringify(document.value))
+    const root = document.value.root
+    if (!root) return
 
-    const module = findModuleById(newDocument.root, moduleId)
+    // Find the module in the current document tree
+    const module = findModuleById(root, moduleId)
     if (!module) return
 
-    // Remove from old parent
-    const oldParent = findParentModule(newDocument.root, moduleId)
+    // Remove from old parent (use the actual tree, not a clone)
+    const oldParent = findParentModule(root, moduleId)
     if (oldParent && oldParent.children) {
       const oldIndex = oldParent.children.findIndex(m => m.id === moduleId)
       if (oldIndex !== -1) {
         oldParent.children.splice(oldIndex, 1)
+        oldParent.children = [...oldParent.children]
       }
     }
 
     // Add to new parent
     const newParent = newParentId
-      ? findModuleById(newDocument.root, newParentId)
-      : newDocument.root
+      ? findModuleById(root, newParentId)
+      : root
 
     if (newParent) {
       if (!newParent.children) newParent.children = []
       newParent.children.splice(newIndex, 0, module)
+      newParent.children = [...newParent.children]
     }
 
-    newDocument.updatedAt = new Date().toISOString()
-    document.value = newDocument
+    document.value.updatedAt = new Date().toISOString()
   }
 
   function updateModuleStyles(id: string, styles: Partial<ModuleStyles>) {
@@ -524,8 +592,7 @@ export const useDocumentStore = defineStore('document', () => {
   function replaceModule(updatedModule: Module) {
     saveToHistory()
 
-    const newDocument = JSON.parse(JSON.stringify(document.value))
-    const module = findModuleById(newDocument.root, updatedModule.id)
+    const module = findModuleById(document.value.root, updatedModule.id)
     if (module) {
       // 允许替换 type
       if (updatedModule.type) {
@@ -545,8 +612,7 @@ export const useDocumentStore = defineStore('document', () => {
       }
     }
 
-    newDocument.updatedAt = new Date().toISOString()
-    document.value = newDocument
+    document.value.updatedAt = new Date().toISOString()
   }
 
   function undo() {
@@ -629,10 +695,20 @@ export const useDocumentStore = defineStore('document', () => {
     return false
   }
 
+  // 页面样式
+  function updatePageStyles(styles: { backgroundColor?: string }) {
+    if (!document.value.pageStyles) {
+      document.value.pageStyles = { backgroundColor: '#ffffff' }
+    }
+    document.value.pageStyles = { ...document.value.pageStyles, ...styles }
+    document.value.updatedAt = new Date().toISOString()
+  }
+
   return {
     // State
     document,
     selectedModuleId,
+    copiedModule,
     // Computed
     selectedModule,
     // Actions
@@ -640,12 +716,16 @@ export const useDocumentStore = defineStore('document', () => {
     selectModule,
     addModule,
     removeModule,
+    copyModule,
+    pasteModule,
+    duplicateModule,
     moveModule,
     reorderRootChildren,
     reorderChildModules,
     updateModuleStyles,
     updateModuleProps,
     replaceModule,
+    updatePageStyles,
     undo,
     redo,
     canUndo,

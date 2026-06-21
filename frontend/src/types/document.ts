@@ -1,4 +1,4 @@
-export type ModuleType = 'container' | 'text' | 'image' | 'divider' | 'button' | 'header' | 'footer' | 'toc' | 'heading' | 'quote'
+export type ModuleType = 'container' | 'text' | 'image' | 'divider' | 'button' | 'header' | 'footer' | 'toc' | 'heading' | 'quote' | 'markdown'
 
 export interface ModuleStyles {
   margin?: string
@@ -14,6 +14,7 @@ export interface ModuleStyles {
   fontStyle?: string
   lineHeight?: string
   fontFamily?: string
+  paragraphSpacing?: string
 }
 
 export interface ContainerModuleProps {
@@ -25,11 +26,16 @@ export interface TextModuleProps {
   icon?: string
 }
 
+export interface MarkdownModuleProps {
+  content: string
+}
+
 export interface ImageModuleProps {
   src: string
   alt: string
   width?: string
   height?: string
+  align?: 'left' | 'center' | 'right'
   caption?: string
   captionStyle?: {
     fontSize?: string
@@ -101,6 +107,7 @@ export interface QuoteModuleProps {
 export type ModuleSpecificProps =
   | ContainerModuleProps
   | TextModuleProps
+  | MarkdownModuleProps
   | ImageModuleProps
   | DividerModuleProps
   | ButtonModuleProps
@@ -124,6 +131,9 @@ export interface Document {
   createdAt: string
   updatedAt: string
   root: Module
+  pageStyles?: {
+    backgroundColor?: string
+  }
 }
 
 // Type guards
@@ -153,12 +163,14 @@ export function getDefaultStyles(): ModuleStyles {
     color: '#333333',
     fontWeight: 'normal',
     fontStyle: 'normal',
-    lineHeight: '1.6'
+    lineHeight: '1.6',
+    paragraphSpacing: '0'
   }
 }
 
 // Create new module factory
 export function createModule(type: 'text'): Module & { props: TextModuleProps }
+export function createModule(type: 'markdown'): Module & { props: MarkdownModuleProps }
 export function createModule(type: 'image'): Module & { props: ImageModuleProps }
 export function createModule(type: 'divider'): Module & { props: DividerModuleProps }
 export function createModule(type: 'button'): Module & { props: ButtonModuleProps }
@@ -179,11 +191,18 @@ export function createModule(type: ModuleType): Module {
         props: { content: '点击编辑文字', icon: '' } as TextModuleProps,
         styles: getDefaultStyles()
       }
+    case 'markdown':
+      return {
+        id,
+        type: 'markdown',
+        props: { content: '# Hello\n\n输入 **Markdown** 内容，右侧实时预览渲染效果。' } as MarkdownModuleProps,
+        styles: getDefaultStyles()
+      }
     case 'image':
       return {
         id,
         type: 'image',
-        props: { src: '', alt: '图片', caption: '', captionStyle: { fontSize: '13px', color: '#9ca3af', italic: false, textAlign: 'center' } } as ImageModuleProps,
+        props: { src: '', alt: '图片', caption: '', align: 'center', captionStyle: { fontSize: '13px', color: '#9ca3af', italic: false, textAlign: 'center' } } as ImageModuleProps,
         styles: getDefaultStyles()
       }
     case 'divider':
@@ -324,6 +343,7 @@ export function createEmptyDocument(title: string = '未命名排版'): Document
     title,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    root
+    root,
+    pageStyles: { backgroundColor: '#ffffff' }
   }
 }
