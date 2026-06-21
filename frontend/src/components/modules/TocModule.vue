@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject, ref, computed } from 'vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, TocModuleProps } from '@/types/document'
+import { renderToc } from '@/renderers/toc'
 
 interface Props {
   module: Module & { props: TocModuleProps }
@@ -12,6 +13,7 @@ const props = defineProps<Props>()
 
 const documentStore = useDocumentStore()
 const isPreviewMode = inject('isPreviewMode', ref(false))
+const previewHtml = computed(() => renderToc(props.module))
 
 function onTitleUpdate(content: string) {
   documentStore.updateModuleProps(props.module.id, { title: content })
@@ -19,7 +21,8 @@ function onTitleUpdate(content: string) {
 </script>
 
 <template>
-  <div class="toc-module" :class="`variant-${module.props.variant}`">
+  <div v-if="isPreviewMode" v-html="previewHtml" class="toc-module"></div>
+  <div v-else class="toc-module" :class="`variant-${module.props.variant}`">
     <!-- 默认风格 -->
     <template v-if="module.props.variant === 'default'">
       <div class="toc-title" :style="{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937', margin: '0 0 12px 0', padding: '0 0 8px 0', borderBottom: '2px solid #e5e7eb' }">

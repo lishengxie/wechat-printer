@@ -3,6 +3,7 @@ import { inject, ref, computed } from 'vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, FooterModuleProps } from '@/types/document'
+import { renderFooter } from '@/renderers/footer'
 
 interface Props {
   module: Module & { props: FooterModuleProps }
@@ -12,6 +13,7 @@ const props = defineProps<Props>()
 
 const documentStore = useDocumentStore()
 const isPreviewMode = inject('isPreviewMode', ref(false))
+const previewHtml = computed(() => renderFooter(props.module))
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '16px',
@@ -33,7 +35,8 @@ function onCopyrightUpdate(content: string) {
 </script>
 
 <template>
-  <div class="footer-module" :class="`variant-${module.props.variant}`" :style="containerStyle">
+  <div v-if="isPreviewMode" v-html="previewHtml" class="footer-module"></div>
+  <div v-else class="footer-module" :class="`variant-${module.props.variant}`" :style="containerStyle">
     <!-- 默认风格 -->
     <template v-if="module.props.variant === 'default'">
       <hr v-if="module.props.showDivider" class="footer-divider" :style="{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '0 0 16px 0' }" />

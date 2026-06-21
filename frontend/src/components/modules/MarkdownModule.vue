@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { inject, ref, computed } from 'vue'
-import { marked } from 'marked'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, MarkdownModuleProps } from '@/types/document'
+import { renderMarkdown } from '@/renderers/markdown'
 
 interface Props {
   module: Module & { props: MarkdownModuleProps }
@@ -12,6 +12,7 @@ const props = defineProps<Props>()
 
 const documentStore = useDocumentStore()
 const isPreviewMode = inject('isPreviewMode', ref(false))
+const previewHtml = computed(() => renderMarkdown(props.module))
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '0',
@@ -29,11 +30,6 @@ const previewStyle = computed(() => ({
   lineHeight: props.module.styles.lineHeight || '1.6',
   textAlign: props.module.styles.textAlign || ('left' as any)
 }))
-
-const renderedHtml = computed(() => {
-  if (!props.module.props.content) return ''
-  return marked.parse(props.module.props.content, { async: false }) as string
-})
 
 function onInput(event: Event) {
   const text = (event.target as HTMLTextAreaElement).value
@@ -62,8 +58,8 @@ function onInput(event: Event) {
       </div>
     </template>
 
-    <!-- 预览模式：只显示渲染结果 -->
-    <div v-else class="md-preview md-preview-only" :style="previewStyle" v-html="renderedHtml"></div>
+    <!-- 预览模式：使用共享渲染器 -->
+    <div v-else class="md-preview md-preview-only" :style="previewStyle" v-html="previewHtml"></div>
   </div>
 </template>
 

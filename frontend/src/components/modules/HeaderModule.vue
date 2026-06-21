@@ -3,6 +3,7 @@ import { inject, ref, computed } from 'vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, HeaderModuleProps } from '@/types/document'
+import { renderHeader } from '@/renderers/header'
 
 interface Props {
   module: Module & { props: HeaderModuleProps }
@@ -12,6 +13,7 @@ const props = defineProps<Props>()
 
 const documentStore = useDocumentStore()
 const isPreviewMode = inject('isPreviewMode', ref(false))
+const previewHtml = computed(() => renderHeader(props.module))
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '24px 16px',
@@ -46,7 +48,8 @@ function onSubtitleUpdate(content: string) {
 </script>
 
 <template>
-  <div class="header-module" :class="`variant-${module.props.variant}`" :style="containerStyle">
+  <div v-if="isPreviewMode" v-html="previewHtml" class="header-module"></div>
+  <div v-else class="header-module" :class="`variant-${module.props.variant}`" :style="containerStyle">
     <!-- 默认风格 -->
     <template v-if="module.props.variant === 'default'">
       <RichTextEditor

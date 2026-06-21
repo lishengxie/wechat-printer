@@ -3,6 +3,7 @@ import { inject, ref, computed } from 'vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, HeadingModuleProps } from '@/types/document'
+import { renderHeading } from '@/renderers/heading'
 
 interface Props {
   module: Module & { props: HeadingModuleProps }
@@ -12,6 +13,7 @@ const props = defineProps<Props>()
 
 const documentStore = useDocumentStore()
 const isPreviewMode = inject('isPreviewMode', ref(false))
+const previewHtml = computed(() => renderHeading(props.module))
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '12px 0',
@@ -65,7 +67,8 @@ function onTextUpdate(content: string) {
 </script>
 
 <template>
-  <div class="heading-module" :class="`variant-${module.props.variant}`" :style="containerStyle">
+  <div v-if="isPreviewMode" v-html="previewHtml" class="heading-module"></div>
+  <div v-else class="heading-module" :class="`variant-${module.props.variant}`" :style="containerStyle">
     <!-- 编号风 -->
     <template v-if="module.props.variant === 'numbered'">
       <div class="numbered-inner">
