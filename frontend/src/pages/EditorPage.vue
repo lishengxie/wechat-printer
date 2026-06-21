@@ -66,7 +66,7 @@ watch(() => documentStore.document, () => {
   }
 }, { deep: true })
 
-// 自动保存：每 5 秒检查一次
+// 自动保存：每 10 秒检查一次
 let autoSaveTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
@@ -74,7 +74,7 @@ onMounted(() => {
     if (isDirty.value && !isSaving.value) {
       handleSave(true)
     }
-  }, 5000)
+  }, 10000)
 })
 
 onBeforeUnmount(() => {

@@ -13,13 +13,17 @@ interface UserItem {
 const users = ref<UserItem[]>([])
 const loading = ref(false)
 const error = ref('')
-const showModal = ref(false)
-const form = ref({
-  username: '',
-  password: '',
-  role: 'user' as 'user' | 'admin'
-})
+
+// Create
+const showCreateModal = ref(false)
+const createForm = ref({ username: '', password: '', role: 'user' as 'user' | 'admin' })
 const creating = ref(false)
+
+// Edit
+const showEditModal = ref(false)
+const editForm = ref({ username: '', password: '' })
+const editingId = ref('')
+const updating = ref(false)
 
 async function loadUsers() {
   loading.value = true
@@ -34,27 +38,55 @@ async function loadUsers() {
   }
 }
 
-function resetForm() {
-  form.value = { username: '', password: '', role: 'user' }
+function resetCreateForm() {
+  createForm.value = { username: '', password: '', role: 'user' }
 }
 
 async function createUser() {
-  if (!form.value.username || !form.value.password) {
+  if (!createForm.value.username || !createForm.value.password) {
     ElMessage.warning('请填写用户名和密码')
     return
   }
   if (creating.value) return
   creating.value = true
   try {
-    await api.register(form.value.username, form.value.password, form.value.role)
-    showModal.value = false
-    resetForm()
+    await api.register(createForm.value.username, createForm.value.password, createForm.value.role)
+    showCreateModal.value = false
+    resetCreateForm()
     ElMessage.success('创建成功')
     await loadUsers()
   } catch (e: any) {
     ElMessage.error('创建失败: ' + e.message)
   } finally {
     creating.value = false
+  }
+}
+
+function openEdit(user: UserItem) {
+  editingId.value = user.id
+  editForm.value = { username: user.username, password: '' }
+  showEditModal.value = true
+}
+
+async function updateUser() {
+  if (!editForm.value.username && !editForm.value.password) {
+    ElMessage.warning('请填写用户名或密码')
+    return
+  }
+  if (updating.value) return
+  updating.value = true
+  try {
+    const payload: { username?: string; password?: string } = {}
+    if (editForm.value.username) payload.username = editForm.value.username
+    if (editForm.value.password) payload.password = editForm.value.password
+    await api.updateUser(editingId.value, payload)
+    showEditModal.value = false
+    ElMessage.success('更新成功')
+    await loadUsers()
+  } catch (e: any) {
+    ElMessage.error('更新失败: ' + e.message)
+  } finally {
+    updating.value = false
   }
 }
 
@@ -80,7 +112,7 @@ onMounted(loadUsers)
   <div class="page">
     <div class="page-header">
       <h2>用户管理</h2>
-      <el-button type="primary" @click="showModal = true">+ 新建用户</el-button>
+      <el-button type="primary" @click="showCreateModal = true">+ 新建用户</el-button>
     </div>
 
     <el-alert
@@ -111,37 +143,62 @@ onMounted(loadUsers)
           {{ new Date(row.created_at).toLocaleString() }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="100">
+      <el-table-column label="操作" width="160">
         <template #default="{ row }">
+          <el-button size="small" plain @click="openEdit(row)">编辑</el-button>
           <el-button size="small" type="danger" plain @click="deleteUser(row.id)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
+    <!-- Create Dialog -->
     <el-dialog
-      v-model="showModal"
+      v-model="showCreateModal"
       title="新建用户"
       width="400px"
-      @close="resetForm"
+      @close="resetCreateForm"
     >
-      <el-form :model="form" label-position="top">
+      <el-form :model="createForm" label-position="top">
         <el-form-item label="用户名">
-          <el-input v-model="form.username" placeholder="username" />
+          <el-input v-model="createForm.username" placeholder="username" />
         </el-form-item>
         <el-form-item label="密码">
-          <el-input v-model="form.password" type="password" placeholder="至少6位" show-password />
+          <el-input v-model="createForm.password" type="password" placeholder="至少6位" show-password />
         </el-form-item>
         <el-form-item label="角色">
-          <el-select v-model="form.role" style="width: 100%">
+          <el-select v-model="createForm.role" style="width: 100%">
             <el-option label="普通用户" value="user" />
             <el-option label="管理员" value="admin" />
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showModal = false">取消</el-button>
+        <el-button @click="showCreateModal = false">取消</el-button>
         <el-button type="primary" :loading="creating" @click="createUser">
           {{ creating ? '创建中...' : '创建' }}
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Edit Dialog -->
+    <el-dialog
+      v-model="showEditModal"
+      title="编辑用户"
+      width="400px"
+      @close="editForm.password = ''"
+    >
+      <el-form :model="editForm" label-position="top">
+        <el-form-item label="用户名">
+          <el-input v-model="editForm.username" placeholder="留空则不修改" />
+        </el-form-item>
+        <el-form-item label="新密码">
+          <el-input v-model="editForm.password" type="password" placeholder="留空则不修改，至少6位" show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showEditModal = false">取消</el-button>
+        <el-button type="primary" :loading="updating" @click="updateUser">
+          {{ updating ? '保存中...' : '保存' }}
         </el-button>
       </template>
     </el-dialog>

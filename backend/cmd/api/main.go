@@ -12,7 +12,11 @@ import (
 
 func main() {
 	// Initialize database
-	db, err := store.NewSQLiteDB("layouts.db")
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "layouts.db"
+	}
+	db, err := store.NewSQLiteDB(dbPath)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
@@ -82,6 +86,7 @@ func main() {
 		{
 			admin.POST("/users", authHandler.Register)
 			admin.GET("/users", authHandler.GetUsers)
+			admin.PUT("/users/:id", authHandler.UpdateUser)
 			admin.DELETE("/users/:id", authHandler.DeleteUser)
 		}
 

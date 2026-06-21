@@ -1,0 +1,5 @@
+api.exe
+*.log
+layouts.db
+uploads/
+.env

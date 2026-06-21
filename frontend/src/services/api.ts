@@ -209,6 +209,13 @@ export const api = {
     return request(`/admin/users/${id}`, { method: 'DELETE' })
   },
 
+  async updateUser(id: string, data: { username?: string; password?: string }): Promise<void> {
+    return request(`/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  },
+
   // Layouts
   async listLayouts(): Promise<Layout[]> {
     const response = await request<{ data: BackendLayout[] }>('/layouts', { method: 'GET' })

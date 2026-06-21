@@ -86,3 +86,23 @@ func (h *AuthHandler) DeleteUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "user deleted"})
 }
+
+// UpdateUser updates a user's username and/or password (admin only)
+func (h *AuthHandler) UpdateUser(c *gin.Context) {
+	id := c.Param("id")
+	var req model.UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if req.Username == "" && req.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "username or password is required"})
+		return
+	}
+	user, err := h.db.UpdateUser(id, req.Username, req.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": user})
+}

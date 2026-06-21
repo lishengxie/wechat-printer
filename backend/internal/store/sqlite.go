@@ -481,6 +481,32 @@ func (s *SQLiteDB) GetAllUsers() ([]*model.User, error) {
 	return users, nil
 }
 
+// UpdateUser updates a user's username and/or password
+func (s *SQLiteDB) UpdateUser(id, username, password string) (*model.User, error) {
+	user, err := s.GetUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if username != "" {
+		user.Username = username
+	}
+	if password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, err
+		}
+		user.PasswordHash = string(hash)
+	}
+	_, err = s.db.Exec(
+		"UPDATE users SET username = ?, password_hash = ? WHERE id = ? AND deleted = 0",
+		user.Username, user.PasswordHash, id,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 // SoftDeleteUser marks a user as deleted
 func (s *SQLiteDB) SoftDeleteUser(id string) error {
 	_, err := s.db.Exec("UPDATE users SET deleted = 1 WHERE id = ?", id)

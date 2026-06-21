@@ -30,3 +30,9 @@ type RegisterRequest struct {
 	Password string `json:"password" binding:"required,min=6"`
 	Role     string `json:"role" binding:"required,oneof=admin user"`
 }
+
+// UpdateUserRequest admin-only user update
+type UpdateUserRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password" binding:"omitempty,min=6"`
+}
