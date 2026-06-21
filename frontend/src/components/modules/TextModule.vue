@@ -3,6 +3,7 @@ import { inject, ref, computed } from 'vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, TextModuleProps } from '@/types/document'
+import { renderText } from '@/renderers/text'
 
 interface Props {
   module: Module & { props: TextModuleProps }
@@ -12,6 +13,7 @@ const props = defineProps<Props>()
 
 const documentStore = useDocumentStore()
 const isPreviewMode = inject('isPreviewMode', ref(false))
+const previewHtml = computed(() => renderText(props.module))
 
 const containerStyle = computed(() => ({
   padding: props.module.styles.padding || '0',
@@ -36,7 +38,8 @@ function onContentUpdate(content: string) {
 </script>
 
 <template>
-  <div class="text-module" :style="containerStyle">
+  <div v-if="isPreviewMode" v-html="previewHtml" class="text-module"></div>
+  <div v-else class="text-module" :style="containerStyle">
     <div v-if="module.props.icon" class="text-icon-row">
       <span class="text-icon">{{ module.props.icon }}</span>
     </div>

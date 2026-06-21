@@ -3,6 +3,7 @@ import { inject, ref, computed } from 'vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { useDocumentStore } from '@/stores/document'
 import type { Module, ButtonModuleProps } from '@/types/document'
+import { renderButton } from '@/renderers/button'
 
 interface Props {
   module: Module & { props: ButtonModuleProps }
@@ -12,6 +13,7 @@ const props = defineProps<Props>()
 
 const documentStore = useDocumentStore()
 const isPreviewMode = inject('isPreviewMode', ref(false))
+const previewHtml = computed(() => renderButton(props.module))
 
 const containerStyle = computed(() => ({
   textAlign: (props.module.styles.textAlign || 'center') as any,
@@ -41,7 +43,8 @@ function onTextUpdate(content: string) {
 </script>
 
 <template>
-  <div class="button-module" :style="containerStyle">
+  <div v-if="isPreviewMode" v-html="previewHtml"></div>
+  <div v-else class="button-module" :style="containerStyle">
     <a
       :href="module.props.link"
       class="inline-block rounded text-center no-underline transition-opacity hover:opacity-90"
