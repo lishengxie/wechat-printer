@@ -5,6 +5,7 @@ import type { Module, ContainerModuleProps, ModuleType } from '@/types/document'
 import { createModule } from '@/types/document'
 import ModuleItem from '../ModuleItem.vue'
 import { VueDraggable } from 'vue-draggable-plus'
+import { renderContainer } from '@/renderers/container'
 
 interface Props {
   module: Module & { props: ContainerModuleProps; children: Module[] }
@@ -15,6 +16,7 @@ const documentStore = useDocumentStore()
 
 // 注入预览模式标志
 const isPreviewMode = inject('isPreviewMode', ref(false))
+const previewHtml = computed(() => renderContainer(props.module))
 const isDragOverContainer = ref(false)
 
 const childModules = ref<Module[]>([])
@@ -196,16 +198,8 @@ function onChildDragUpdate() {
       </VueDraggable>
     </template>
 
-    <!-- 预览模式 -->
-    <template v-else>
-      <div
-        class="container-inner grid"
-        :class="getLayoutClass(module.props.layout)"
-        :style="containerStyle"
-      >
-        <ModuleItem v-for="child in (module.children || [])" :key="child.id" :module="child" />
-      </div>
-    </template>
+    <!-- 预览模式：使用共享渲染器 -->
+    <div v-else v-html="previewHtml" class="container-preview"></div>
   </div>
 </template>
 

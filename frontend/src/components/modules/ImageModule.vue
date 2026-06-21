@@ -4,6 +4,7 @@ import RichTextEditor from '@/components/RichTextEditor.vue'
 import { useDocumentStore } from '@/stores/document'
 import { uploadImage } from '@/services/api'
 import type { Module, ImageModuleProps } from '@/types/document'
+import { renderImage } from '@/renderers/image'
 
 interface Props {
   module: Module & { props: ImageModuleProps }
@@ -13,6 +14,7 @@ const props = defineProps<Props>()
 
 const documentStore = useDocumentStore()
 const isPreviewMode = inject('isPreviewMode', ref(false))
+const previewHtml = computed(() => renderImage(props.module))
 
 const isDragOver = ref(false)
 const isUploading = ref(false)
@@ -129,7 +131,8 @@ function onFileInputChange(event: Event) {
 </script>
 
 <template>
-  <div
+  <div v-if="isPreviewMode" v-html="previewHtml" class="image-module"></div>
+  <div v-else
     class="image-module"
     :class="{ 'is-drag-over': isDragOver, 'is-uploading': isUploading }"
     :style="{ margin: module.styles.margin }"
