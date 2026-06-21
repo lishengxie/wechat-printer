@@ -26,7 +26,7 @@ function renderMagazine(p: HeaderModuleProps, st: any): string {
   const align = st.textAlign || 'center'
   return `<div style="padding:24px 16px;text-align:${align}">
   <div style="width:40px;height:4px;background:#dc2626;border-radius:2px;margin:0 ${align === 'left' ? '0 16px 0 0' : 'auto'} 16px ${align === 'left' ? '0' : 'auto'}"></div>
-  ${p.subtitle ? `<div style="font-size:13px;font-weight:500;color:${s(st.color) || '#dc2626'};letter-spacing:2px;margin:0 0 8px 0">${p.subtitle}</div>` : ''}
+  ${p.subtitle ? `<div style="font-size:13px;font-weight:500;color:${s(st.color) || '#dc2626'};letter-spacing:2px;text-transform:uppercase;margin:0 0 8px 0">${p.subtitle}</div>` : ''}
   <div style="font-size:28px;font-weight:800;color:#1f2937;line-height:1.3;letter-spacing:-0.5px;margin:0 0 12px 0">${p.title}</div>
   <div style="width:60px;height:3px;background:#e5e7eb;border-radius:2px;margin:0 ${align === 'left' ? '0' : 'auto'} 12px ${align === 'left' ? '0' : 'auto'}"></div>
   <div style="text-align:${align};font-size:13px;color:#9ca3af;display:flex;justify-content:${align === 'left' ? 'flex-start' : 'center'};gap:16px">
