@@ -43,7 +43,12 @@
       "Bash(curl -s http://localhost:8080/api/ai/config -H \"Authorization: Bearer $TOKEN\")",
       "Bash(curl -s http://localhost:8080/api/ai/config -X PUT -H \"Content-Type: application/json\" -H \"Authorization: Bearer $TOKEN\" -d '{\"\"api_key\"\":\"\"test-key\"\",\"\"api_base\"\":\"\"https://test.api.com\"\",\"\"model\"\":\"\"test-model\"\"}')",
       "Bash(curl -s http://localhost:8080/api/ai/config -X PUT -H \"Content-Type: application/json\" -H \"Authorization: Bearer $TOKEN\" -d '{\"\"api_key\"\":\"\"\"\",\"\"api_base\"\":\"\"\"\",\"\"model\"\":\"\"\"\"}')",
-      "Bash(curl -s http://localhost:3008)"
+      "Bash(curl -s http://localhost:3008)",
+      "Bash(lsof -Ti:5173 -sTCP:LISTEN)",
+      "Bash(findstr LISTEN)",
+      "Bash(lsof -ti:3000 -ti:3001 -ti:3002 -ti:3003)",
+      "Bash(xargs kill:*)",
+      "Bash(xargs -I{} taskkill -f -p {})"
     ]
   }
 }
