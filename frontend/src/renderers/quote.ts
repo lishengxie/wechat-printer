@@ -28,8 +28,8 @@ export function renderQuote(module: Module): string {
     ? `<p style="margin:8px 0 0 0;font-size:13px;color:#9ca3af;text-align:right">—— ${p.author}</p>`
     : ''
 
-  return `<div style="${containerStyles}">
-  <div style="${contentStyles}">${p.content || ''}</div>
+  return `<section style="${containerStyles}">
+  <section style="${contentStyles}">${p.content || ''}</section>
   ${authorHtml}
-</div>`
+</section>`
 }

@@ -47,7 +47,7 @@ export function renderContainer(module: Module): string {
 
   if (layout === 'single') {
     const childrenHtml = children.map(child => renderChildModule(child)).join('')
-    return `<div${containerStyle}>${childrenHtml}</div>`
+    return `<section${containerStyle}>${childrenHtml}</section>`
   }
 
   const colCount = layout === 'three-column' ? 3 : 2
@@ -56,9 +56,9 @@ export function renderContainer(module: Module): string {
     return `<td style="vertical-align:top;padding:0 8px;width:${100 / colCount}%">${childHtml}</td>`
   }).join('')
 
-  return `<div${containerStyle}>
+  return `<section${containerStyle}>
   <table style="width:100%;border-collapse:collapse">
     <tr>${colsHtml}</tr>
   </table>
-</div>`
+</section>`
 }

@@ -7,7 +7,7 @@ export function renderDivider(module: Module): string {
   const style = p.style || 'solid'
   const color = p.color || '#e5e7eb'
 
-  return `<div style="margin:${margin}">
+  return `<section style="margin:${margin}">
   <hr style="border:none;border-top:${style === 'none' ? 'solid' : style} 1px ${color};margin:0" />
-</div>`
+</section>`
 }

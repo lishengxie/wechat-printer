@@ -32,8 +32,8 @@ export function renderText(module: Module): string {
   const fullContainer = containerStyles ? `margin:${margin};${containerStyles}` : `margin:${margin}`
   const fullInner = innerStyles || 'margin:0'
 
-  return `<div style="${fullContainer}">
+  return `<section style="${fullContainer}">
   ${iconHtml}
-  <div style="${fullInner}">${p.content || ''}</div>
-</div>`
+  <section style="${fullInner}">${p.content || ''}</section>
+</section>`
 }

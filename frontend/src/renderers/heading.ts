@@ -56,43 +56,43 @@ export function renderHeading(module: Module): string {
 
   switch (variant) {
     case 'numbered': {
-      return `<div style="${containerStyles}">
+      return `<section style="${containerStyles}">
   <table style="width:100%;border-collapse:collapse">
     <tr>
       <td style="width:4px;background-color:${barColor};border-radius:2px;padding:0"></td>
       <td style="padding:0 0 0 12px">
-        <div style="${headingStyle}">${prefixHtml}${p.text}</div>
+        <section style="${headingStyle}">${prefixHtml}${p.text}</section>
       </td>
     </tr>
   </table>
-</div>`
+</section>`
     }
     case 'left-bar': {
-      return `<div style="${containerStyles}">
+      return `<section style="${containerStyles}">
   <table style="width:100%;border-collapse:collapse">
     <tr>
       <td style="width:4px;background-color:${barColor};border-radius:2px;padding:0"></td>
       <td style="padding:0 0 0 12px">
-        <div style="${headingStyle}">${p.text}</div>
+        <section style="${headingStyle}">${p.text}</section>
       </td>
     </tr>
   </table>
-</div>`
+</section>`
     }
     case 'center': {
-      return `<div style="${containerStyles}">
-  <div style="text-align:center">
-    <div style="width:60px;height:2px;background:#e5e7eb;border-radius:1px;margin:0 auto 12px auto"></div>
-    <div style="${headingStyle};text-align:center">${prefixHtml}${p.text}</div>
-    <div style="width:60px;height:2px;background:#e5e7eb;border-radius:1px;margin:12px auto 0 auto"></div>
-  </div>
-</div>`
+      return `<section style="${containerStyles}">
+  <section style="text-align:center">
+    <section style="width:60px;height:2px;background:#e5e7eb;border-radius:1px;margin:0 auto 12px auto"></section>
+    <section style="${headingStyle};text-align:center">${prefixHtml}${p.text}</section>
+    <section style="width:60px;height:2px;background:#e5e7eb;border-radius:1px;margin:12px auto 0 auto"></section>
+  </section>
+</section>`
     }
     case 'simple':
     default: {
-      return `<div style="${containerStyles}">
-  <div style="${headingStyle}">${prefixHtml}${p.text}</div>
-</div>`
+      return `<section style="${containerStyles}">
+  <section style="${headingStyle}">${prefixHtml}${p.text}</section>
+</section>`
     }
   }
 }

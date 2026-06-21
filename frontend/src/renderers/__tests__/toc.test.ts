@@ -32,11 +32,13 @@ describe('renderToc', () => {
 
   it('should render card variant', () => {
     const html = renderToc(createMockModule({ props: { title: 'TOC', items: defaultItems, variant: 'card' } }))
-    expect(html).toContain('box-shadow')
+    expect(html).toContain('border-radius:10px')
+    expect(html).not.toContain('box-shadow')
   })
 
   it('should render minimal variant', () => {
     const html = renderToc(createMockModule({ props: { title: 'TOC', items: defaultItems, variant: 'minimal' } }))
-    expect(html).toContain('letter-spacing')
+    expect(html).toContain('font-size:14px')
+    expect(html).toContain('font-weight:600')
   })
 })

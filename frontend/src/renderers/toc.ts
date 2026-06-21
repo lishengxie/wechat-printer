@@ -9,16 +9,16 @@ function renderDefault(items: TocItem[], title: string): string {
     const fw = level === 0 ? '500' : 'normal'
     const c = level === 0 ? '#374151' : '#6b7280'
     const fs = level === 0 ? '14px' : '13px'
-    return `<div style="display:flex;align-items:center;margin:6px 0;padding-left:${pad}px">
-  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:${bc};margin-right:8px;flex-shrink:0"></span>
-  <span style="font-size:${fs};font-weight:${fw};color:${c};line-height:1.5">${item.text}</span>
-</div>`
+    return `<section style="margin:6px 0;padding-left:${pad}px">
+  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:${bc};margin-right:8px;vertical-align:middle"></span>
+  <span style="font-size:${fs};font-weight:${fw};color:${c};line-height:1.5;vertical-align:middle">${item.text}</span>
+</section>`
   }).join('')
 
-  return `<div style="margin:0 0 16px 0;padding:16px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px">
-  <div style="font-size:16px;font-weight:bold;color:#1f2937;margin:0 0 12px 0;padding:0 0 8px 0;border-bottom:2px solid #e5e7eb">${title}</div>
+  return `<section style="margin:0 0 16px 0;padding:16px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px">
+  <section style="font-size:16px;font-weight:bold;color:#1f2937;margin:0 0 12px 0;padding:0 0 8px 0;border-bottom:2px solid #e5e7eb">${title}</section>
   ${itemsHtml}
-</div>`
+</section>`
 }
 
 function renderNumbered(items: TocItem[], title: string): string {
@@ -28,57 +28,56 @@ function renderNumbered(items: TocItem[], title: string): string {
     const isLevel0 = level === 0
     const numColor = isLevel0 ? '#3b82f6' : '#d1d5db'
     const num = String(index + 1).padStart(2, '0')
-    return `<div style="display:flex;align-items:baseline;gap:8px;margin:8px 0;padding-left:${pad}px">
-  <span style="font-size:11px;font-weight:600;color:${numColor};min-width:22px;flex-shrink:0">${num}</span>
-  <span style="font-size:${isLevel0 ? '14px' : '13px'};font-weight:${isLevel0 ? '500' : 'normal'};color:${isLevel0 ? '#374151' : '#6b7280'}">${item.text}</span>
-</div>`
+    return `<section style="margin:8px 0;padding-left:${pad}px">
+  <span style="font-size:11px;font-weight:600;color:${numColor};min-width:22px;display:inline-block;vertical-align:middle">${num}</span>
+  <span style="font-size:${isLevel0 ? '14px' : '13px'};font-weight:${isLevel0 ? '500' : 'normal'};color:${isLevel0 ? '#374151' : '#6b7280'};vertical-align:middle">${item.text}</span>
+</section>`
   }).join('')
 
-  return `<div style="margin:0 0 16px 0;padding:16px;background:#fff;border-radius:8px">
-  <div style="font-size:16px;font-weight:600;color:#1f2937;margin:0 0 14px 0;display:flex;align-items:center;gap:8px">
-    <span style="font-size:18px">📑</span>
-    ${title}
-  </div>
+  return `<section style="margin:0 0 16px 0;padding:16px;background:#fff;border-radius:8px">
+  <section style="font-size:16px;font-weight:600;color:#1f2937;margin:0 0 14px 0">
+    <span style="font-size:18px;display:inline-block;vertical-align:middle;margin-right:8px">📑</span>
+    <span style="display:inline-block;vertical-align:middle">${title}</span>
+  </section>
   ${itemsHtml}
-</div>`
+</section>`
 }
 
 function renderCard(items: TocItem[], title: string): string {
   const itemsHtml = items.map((item, index) => {
     const pad = (item.level || 0) * 16
-    const isActive = index === 0
-    const numColor = isActive ? '#3b82f6' : '#d1d5db'
+    const numColor = '#d1d5db'
     const num = String(index + 1).padStart(2, '0')
     const isLast = index === items.length - 1
     const borderBottom = isLast ? '' : 'border-bottom:1px solid #f3f4f6'
-    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;${borderBottom};padding-left:${pad}px">
-  <span style="font-size:11px;font-weight:600;color:${numColor};min-width:22px;flex-shrink:0">${num}</span>
-  <span style="font-size:13px;color:#4b5563">${item.text}</span>
-</div>`
+    return `<section style="margin:0;padding:8px 0;${borderBottom};padding-left:${pad}px">
+  <span style="font-size:11px;font-weight:600;color:${numColor};min-width:22px;display:inline-block;vertical-align:middle">${num}</span>
+  <span style="font-size:13px;color:#4b5563;vertical-align:middle">${item.text}</span>
+</section>`
   }).join('')
 
-  return `<div style="margin:0 0 16px 0;padding:20px;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
-  <div style="font-size:15px;font-weight:600;color:#1f2937;margin:0 0 14px 0;display:flex;align-items:center;gap:8px">
-    <span style="display:inline-block;width:4px;height:16px;background:#3b82f6;border-radius:2px;flex-shrink:0"></span>
-    ${title}
-  </div>
+  return `<section style="margin:0 0 16px 0;padding:20px;border:1px solid #e5e7eb;border-radius:10px">
+  <section style="font-size:15px;font-weight:600;color:#1f2937;margin:0 0 14px 0">
+    <span style="display:inline-block;width:4px;height:16px;background:#3b82f6;border-radius:2px;vertical-align:middle;margin-right:8px"></span>
+    <span style="display:inline-block;vertical-align:middle">${title}</span>
+  </section>
   ${itemsHtml}
-</div>`
+</section>`
 }
 
 function renderMinimal(items: TocItem[], title: string): string {
   const itemsHtml = items.map((item) => {
     const pad = (item.level || 0) * 12
-    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;padding-left:${pad}px">
-  <span style="display:inline-block;width:12px;height:1px;background:#d1d5db;flex-shrink:0"></span>
-  <span style="font-size:13px;color:#6b7280;line-height:1.5">${item.text}</span>
-</div>`
+    return `<section style="margin:5px 0;padding-left:${pad}px">
+  <span style="display:inline-block;width:12px;height:1px;background:#d1d5db;vertical-align:middle;margin-right:8px"></span>
+  <span style="font-size:13px;color:#6b7280;line-height:1.5;vertical-align:middle">${item.text}</span>
+</section>`
   }).join('')
 
-  return `<div style="margin:0 0 16px 0">
-  <div style="font-size:14px;font-weight:600;color:#374151;margin:0 0 10px 0;letter-spacing:1px">${title}</div>
+  return `<section style="margin:0 0 16px 0">
+  <section style="font-size:14px;font-weight:600;color:#374151;margin:0 0 10px 0">${title}</section>
   ${itemsHtml}
-</div>`
+</section>`
 }
 
 export function renderToc(module: Module): string {

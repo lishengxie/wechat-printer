@@ -60,7 +60,7 @@ export function renderMarkdown(module: Module): string {
     ? `margin:${margin};${containerStyles}`
     : `margin:${margin}`
 
-  return `<div style="${combinedContainer}">
-  <div style="${contentStyles || ''}">${mdHtml}</div>
-</div>`
+  return `<section style="${combinedContainer}">
+  <section style="${contentStyles || ''}">${mdHtml}</section>
+</section>`
 }

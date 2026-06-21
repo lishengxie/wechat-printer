@@ -22,7 +22,7 @@ export function renderButton(module: Module): string {
   const sizeStyle = sizeMap[size] || sizeMap.medium
   const linkTarget = link ? ` target="_blank"` : ''
 
-  return `<div style="margin:${margin};text-align:${textAlign}">
+  return `<section style="margin:${margin};text-align:${textAlign}">
   <a href="${link}"${linkTarget} style="display:inline-block;${sizeStyle};background-color:${bg};color:${color};border-radius:${borderRadius};text-decoration:none;text-align:center">${p.text}</a>
-</div>`
+</section>`
 }

@@ -25,8 +25,8 @@ export function renderImage(module: Module): string {
     ? `<p style="margin:8px 0 0 0;font-size:${captionStyle.fontSize || '13px'};color:${captionStyle.color || '#9ca3af'};font-style:${captionStyle.italic ? 'italic' : 'normal'};text-align:${captionStyle.textAlign || 'center'};line-height:1.6">${p.caption}</p>`
     : ''
 
-  return `<div style="margin:${margin};${containerAlign}">
+  return `<section style="margin:${margin};${containerAlign}">
   ${img}
   ${captionHtml}
-</div>`
+</section>`
 }
