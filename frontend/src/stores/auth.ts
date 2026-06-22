@@ -8,13 +8,13 @@ export interface User {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const savedUserJson = localStorage.getItem('user')
+  const savedUserJson = sessionStorage.getItem('user')
   let savedUser: User | null = null
   if (savedUserJson) {
     try { savedUser = JSON.parse(savedUserJson) } catch {}
   }
 
-  const token = ref<string | null>(localStorage.getItem('token'))
+  const token = ref<string | null>(sessionStorage.getItem('token'))
   const user = ref<User | null>(savedUser)
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
@@ -23,23 +23,23 @@ export const useAuthStore = defineStore('auth', () => {
   function setAuth(newToken: string, newUser: User) {
     token.value = newToken
     user.value = newUser
-    localStorage.setItem('token', newToken)
-    localStorage.setItem('user', JSON.stringify(newUser))
+    sessionStorage.setItem('token', newToken)
+    sessionStorage.setItem('user', JSON.stringify(newUser))
   }
 
   function clearAuth() {
     token.value = null
     user.value = null
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('user')
   }
 
   function restoreFromStorage() {
-    const savedToken = localStorage.getItem('token')
+    const savedToken = sessionStorage.getItem('token')
     if (savedToken) {
       token.value = savedToken
     }
-    const saved = localStorage.getItem('user')
+    const saved = sessionStorage.getItem('user')
     if (saved) {
       try { user.value = JSON.parse(saved) } catch {}
     }
