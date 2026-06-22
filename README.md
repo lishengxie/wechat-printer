@@ -63,7 +63,7 @@ cp .env.example .env    # 编辑 JWT_SECRET 为随机字符串
 docker compose up -d
 ```
 
-- 前端访问：`http://localhost`
+- 前端访问：`http://localhost:3000`
 - 后端 API：`http://localhost:8080`
 
 首次启动会自动创建管理员账号（登录后可在用户管理页面添加其他用户）。
