@@ -67,7 +67,6 @@ async function handleLogin() {
           </el-button>
         </el-form-item>
       </el-form>
-      <p class="hint">默认管理员: admin / admin123</p>
     </el-card>
   </div>
 </template>
@@ -98,11 +97,5 @@ async function handleLogin() {
 }
 .login-btn {
   width: 100%;
-}
-.hint {
-  margin-top: 18px;
-  font-size: 12px;
-  text-align: center;
-  color: var(--el-text-color-placeholder);
 }
 </style>
