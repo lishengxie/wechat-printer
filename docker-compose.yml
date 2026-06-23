@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -7,9 +5,9 @@ services:
     container_name: wechat-printer-backend
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "5231:5231"
     environment:
-      - PORT=8080
+      - PORT=5231
       - DB_PATH=/data/layouts.db
       - UPLOAD_DIR=/data/uploads
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
